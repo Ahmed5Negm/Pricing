@@ -1,0 +1,2583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaShop — Connected Seller &amp; Customer Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #0f172a; min-height: 100vh; color: #fff; padding: 30px 16px 60px; user-select: none; }
+
+        .page-header { text-align: center; max-width: 720px; margin: 0 auto 26px; }
+        .page-header h1 { font-size: 24px; color: #ff2f8f; margin-bottom: 6px; }
+        .page-header p { color: #94a3b8; font-size: 13.5px; line-height: 1.5; }
+        .reset-btn {
+            margin-top: 14px; background: #1e293b; color: #cbd5e1; border: 1px solid #334155;
+            padding: 8px 18px; border-radius: 10px; font-size: 13px; cursor: pointer;
+        }
+        .reset-btn:hover { background: #334155; }
+
+        .stage { display: flex; gap: 60px; align-items: flex-start; justify-content: center; flex-wrap: wrap; max-width: 1000px; margin: 0 auto; }
+        .phone-col { display: flex; flex-direction: column; align-items: center; }
+        .col-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin-bottom: 16px; color: #e2e8f0; }
+        .col-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .col-label.seller-label .dot { background: #ff2f8f; }
+        .col-label.customer-label .dot { background: #38bdf8; }
+        .arrow-hint { align-self: center; text-align: center; color: #475569; font-size: 11px; margin-top: 90px; max-width: 90px; }
+        .arrow-hint i { font-size: 22px; display: block; margin-bottom: 6px; color: #334155; }
+
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #fff; padding: 30px 16px; user-select: none; }
+
+        .title { text-align: center; margin-bottom: 18px; max-width: 380px; }
+        .title h1 { font-size: 22px; color: #ff2f8f; margin-bottom: 6px; }
+        .title p { color: #94a3b8; font-size: 13px; }
+        .step-track { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; }
+        .step-dot {
+            width: 26px; height: 26px; border-radius: 50%; background: #1e293b; color: #64748b;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+            border: 1px solid #334155; transition: all 0.25s ease;
+        }
+        .step-dot.done { background: #ff2f8f; color: #fff; border-color: #ff2f8f; }
+        .step-dot.current { background: #ff2f8f; color: #fff; border-color: #ff2f8f; box-shadow: 0 0 0 4px rgba(255,47,143,0.25); }
+        .step-line { width: 20px; height: 2px; background: #334155; }
+        .step-line.done { background: #ff2f8f; }
+
+        .phone-frame {
+            width: 380px; height: 820px;
+            background-color: #000; border-radius: 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border: 12px solid #2e2e2e; position: relative;
+            overflow: hidden; margin-top: 22px;
+        }
+        .notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 110px; height: 28px; background-color: #000;
+            border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; z-index: 999;
+        }
+
+        .screen {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            background-color: #f8fafc; color: #0f172a; display: none; flex-direction: column;
+            padding: 46px 18px 18px; opacity: 0; transition: opacity 0.25s ease;
+        }
+        .screen.active { display: flex; opacity: 1; }
+
+        .status-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #0f172a; margin-bottom: 10px; padding: 0 2px; }
+
+        .app-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .app-header i.icon-btn { font-size: 16px; color: #334155; cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 9px; }
+        .app-header i.icon-btn.danger { color: #ef4444; background: #fef2f2; }
+        .app-header h3 { font-size: 16px; font-weight: 700; }
+
+        /* --- SCREEN 1: ORDER LIST --- */
+        .search-bar { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 11px 14px; margin-bottom: 14px; }
+        .search-bar i { color: #94a3b8; font-size: 13px; }
+        .search-bar input { border: none; outline: none; flex-grow: 1; font-size: 13px; color: #0f172a; background: transparent; }
+        .search-bar .filter-btn { width: 26px; height: 26px; border-radius: 8px; background: #fdeef5; color: #ff2f8f; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+
+        .tabs { display: flex; gap: 18px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab { font-size: 13px; color: #94a3b8; font-weight: 600; white-space: nowrap; cursor: pointer; padding-bottom: 8px; position: relative; }
+        .tab.active { color: #ff2f8f; }
+        .tab.active::after { content: ''; position: absolute; bottom: -9px; left: 0; right: 0; height: 2px; background: #ff2f8f; border-radius: 2px; }
+
+        .item-list { flex-grow: 1; overflow-y: auto; }
+        .cat-header { font-size: 11.5px; font-weight: 800; color: #ff2f8f; text-transform: uppercase; letter-spacing: 0.4px; margin: 14px 0 8px; }
+        .cat-header:first-child { margin-top: 2px; }
+        .list-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 14px;
+            margin-bottom: 10px; border: 1.5px solid #e9edf3; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+        .list-item:hover { border-color: #ff2f8f; box-shadow: 0 0 0 3px rgba(255,47,143,0.08); }
+        .list-item.selected { border-color: #ff2f8f; background: #fff5fa; box-shadow: 0 0 0 3px rgba(255,47,143,0.1); }
+        .thumb {
+            width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center;
+            justify-content: center; font-size: 22px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .item-info { flex-grow: 1; min-width: 0; }
+        .item-info h5 { font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 1px; }
+        .item-info p { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+        .item-price { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .item-price.updated { color: #16a34a; }
+        .qty-badge { background: #f1f5f9; padding: 5px 11px; border-radius: 8px; font-weight: 700; font-size: 12px; color: #475569; }
+
+        .list-footer {
+            display: flex; align-items: center; justify-content: space-between; background: #fff; border-top: 1px solid #e2e8f0;
+            padding: 14px 4px 4px; margin-top: 6px;
+        }
+        .list-footer .count { font-size: 12px; color: #0f172a; font-weight: 700; }
+        .list-footer .view-details { font-size: 11px; color: #ff2f8f; font-weight: 600; }
+        .total-btn { background: #ff2f8f; color: #fff; font-weight: 700; font-size: 13px; padding: 10px 16px; border-radius: 10px; border: none; display: flex; align-items: center; gap: 6px; }
+
+        /* --- SCREEN 2: ITEM DETAIL --- */
+        .product-visual {
+            width: 150px; height: 110px; margin: 4px auto 16px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center; font-size: 52px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+        }
+        .detail-title { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 2px; }
+        .detail-meta { font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 18px; }
+
+        .info-card { background: #fff; border-radius: 14px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 18px; }
+        .info-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-row span:first-child { color: #64748b; }
+        .info-row span:last-child { font-weight: 700; color: #0f172a; }
+
+        .btn { width: 100%; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; transition: transform 0.1s, background 0.15s; }
+        .btn:active { transform: scale(0.97); }
+        .btn-pink-outline { background: #fdeef5; color: #ff2f8f; border: 1.5px solid #ffc9e2; }
+        .btn-outline { background: #fff; color: #475569; border: 1.5px solid #cbd5e1; margin-top: 10px; }
+        .btn-green { background: #16a34a; color: #fff; }
+        .link-remove { text-align: center; color: #ef4444; font-size: 13px; font-weight: 700; margin-top: auto; padding-top: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+        /* --- SCREEN 3: CHANGE PRICE MODAL (sits above screen 2 content) --- */
+        .modal-dim { position: absolute; inset: 0; background: rgba(15,23,42,0.45); z-index: 10; }
+        .modal-sheet {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 22px 22px 0 0;
+            padding: 22px 20px 24px; z-index: 20; box-shadow: 0 -12px 30px rgba(0,0,0,0.15);
+        }
+        .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .modal-head h4 { font-size: 17px; font-weight: 800; }
+        .modal-head i { color: #94a3b8; cursor: pointer; font-size: 16px; }
+        .field-label { font-size: 11px; font-weight: 700; color: #ff2f8f; letter-spacing: 0.3px; margin-bottom: 6px; display: block; }
+        .field-input {
+            width: 100%; border-radius: 10px; padding: 13px 14px; font-size: 15px; font-weight: 700; margin-bottom: 14px;
+            border: 1.5px solid #e2e8f0; background: #f8fafc; color: #64748b;
+        }
+        .field-input.editable { border-color: #ff2f8f; background: #fff; color: #0f172a; }
+        .field-input.editable:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,47,143,0.15); }
+        .helper-text { font-size: 11px; color: #94a3b8; margin-bottom: 16px; line-height: 1.5; }
+        .helper-text .ar { display: block; direction: rtl; margin-top: 2px; }
+
+        /* --- SCREEN 4: CONFIRMATION --- */
+        .confirm-icon { width: 76px; height: 76px; border-radius: 50%; background: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; margin: 6px auto 16px; position: relative; }
+        .confirm-icon i.tag { font-size: 26px; color: #ff2f8f; }
+        .confirm-icon i.check { position: absolute; bottom: 2px; right: 2px; background: #16a34a; color: #fff; font-size: 11px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+        .confirm-title { font-size: 19px; font-weight: 800; text-align: center; margin-bottom: 6px; }
+        .confirm-sub { font-size: 12.5px; color: #64748b; text-align: center; line-height: 1.5; margin-bottom: 2px; }
+        .confirm-sub .ar { display: block; direction: rtl; margin-top: 3px; }
+        .confirm-sub strong { color: #0f172a; }
+
+        .price-compare { background: #fff; border-radius: 14px; padding: 16px; border: 1px solid #fecdd8; margin: 18px 0; }
+        .pc-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .pc-row .lbl { color: #64748b; }
+        .pc-row .old-val { text-decoration: line-through; color: #94a3b8; font-weight: 600; }
+        .pc-divider { border-top: 1px dashed #e2e8f0; margin: 12px 0; }
+        .pc-row .new-val { color: #16a34a; font-weight: 800; font-size: 16px; }
+
+        .footer-brand { text-align: center; font-size: 10.5px; color: #94a3b8; margin-top: 14px; }
+        .footer-brand span { color: #ff2f8f; font-weight: 700; }
+
+        /* --- SCREEN 5: CHECKOUT --- */
+        .summary-card { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 6px 14px; margin-bottom: 14px; max-height: 190px; overflow-y: auto; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .summary-row:last-child { border-bottom: none; }
+        .summary-row .name { color: #0f172a; font-weight: 600; }
+        .summary-row .qty { color: #94a3b8; font-weight: 500; margin-left: 6px; }
+        .summary-row .amt { font-weight: 700; color: #0f172a; }
+
+        .breakdown-card { background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 16px; margin-bottom: 16px; }
+        .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 10px; }
+        .breakdown-row span:last-child { color: #0f172a; font-weight: 600; }
+        .breakdown-total { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px dashed #e2e8f0; }
+        .breakdown-total .lbl { font-size: 14px; font-weight: 700; color: #0f172a; }
+        .breakdown-total .val { font-size: 19px; font-weight: 800; color: #ff2f8f; }
+
+        .confirm-banner { background: #fff8fb; border: 1px dashed #ffc9e2; border-radius: 12px; padding: 12px 14px; font-size: 12px; color: #64748b; text-align: center; line-height: 1.5; margin-bottom: 16px; }
+        .confirm-banner strong { color: #0f172a; }
+
+        /* --- SCREEN 6: ORDER CONFIRMED --- */
+        .success-wrap { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .success-icon { width: 84px; height: 84px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+        .success-icon i { font-size: 34px; color: #16a34a; }
+        .success-wrap h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .success-wrap p { font-size: 13px; color: #64748b; margin-bottom: 20px; max-width: 260px; }
+        .success-total { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 26px; }
+        .success-total span { display: block; font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 4px; }
+
+        /* --- SCREEN 8: REVIEW PRICE CHANGES --- */
+        .change-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 14px; margin-bottom: 10px; border: 1.5px solid #e9edf3; }
+        .change-info { flex-grow: 1; min-width: 0; }
+        .change-info h5 { font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .change-prices { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .change-prices .old { color: #94a3b8; text-decoration: line-through; font-weight: 600; }
+        .change-prices i { color: #cbd5e1; font-size: 10px; }
+        .change-prices .new { color: #16a34a; font-weight: 800; }
+        .delta-badge { font-size: 11px; font-weight: 800; padding: 5px 9px; border-radius: 8px; white-space: nowrap; }
+        .delta-badge.up { background: #fee2e2; color: #dc2626; }
+        .delta-badge.down { background: #dcfce7; color: #16a34a; }
+        .notified-banner { display: flex; align-items: center; gap: 8px; background: #dcfce7; color: #15803d; font-size: 12.5px; font-weight: 700; padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; }
+        .empty-state { text-align: center; color: #94a3b8; font-size: 12.5px; padding: 40px 10px; }
+        .empty-state i { font-size: 22px; display: block; margin-bottom: 10px; }
+
+        /* Toast */
+        .toast {
+            position: absolute; left: 50%; bottom: 26px; transform: translate(-50%, 16px);
+            background: #0f172a; color: #fff; padding: 12px 18px; border-radius: 14px; font-size: 12.5px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; z-index: 500; white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast i { color: #4ade80; }
+    
+
+        /* --- CROSS-APP SYNC BANNER (Customer <-> Seller) --- */
+        .sync-banner { display: none; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; font-size: 11.5px; line-height: 1.4; }
+        .sync-banner i { font-size: 16px; flex-shrink: 0; }
+        .sync-banner.waiting { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+        .sync-banner.approved { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; flex-wrap: wrap; }
+        .sync-banner.cancelled { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .sync-banner-btn { margin-left: auto; background: #16a34a; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
+        .status-tag { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: 0.2px; padding: 3px 6px; border-radius: 6px; margin-left: 6px; vertical-align: middle; }
+        .status-tag.replace { background: #f3e8ff; color: #7c3aed; }
+        .status-tag.approved { background: #dcfce7; color: #16a34a; }
+        .status-tag.pending { background: #fff7ed; color: #c2410c; }
+
+        /* --- ACTIVITY LOG (what happened after the customer responded) --- */
+        .activity-log { margin-bottom: 14px; }
+        .activity-log:empty { margin-bottom: 0; }
+        .activity-item {
+            display: flex; align-items: flex-start; gap: 10px; background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; font-size: 11.5px; line-height: 1.4;
+        }
+        .activity-item i { font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+        .activity-item.accept i, .activity-item.accept-sub i { color: #16a34a; }
+        .activity-item.remove i, .activity-item.decline-sub i { color: #ea580c; }
+        .activity-item.cancel i { color: #dc2626; }
+        .activity-item.pending-sub i { color: #c2410c; }
+        .activity-item .a-time { display: block; color: #94a3b8; font-size: 10px; margin-top: 2px; }
+
+        /* --- INLINE SUBSTITUTE STATUS ON ITEM ROWS --- */
+        .sub-inline { font-size: 10.5px; font-weight: 600; margin-top: 4px; padding: 4px 0; }
+        .sub-inline.queued { color: #64748b; }
+        .sub-inline.pending { color: #c2410c; }
+        .sub-inline.accepted { color: #16a34a; }
+        .sub-inline.declined { color: #dc2626; }
+        .sub-inline.timeout { color: #7c3aed; }
+        .sub-inline.timeout span { text-decoration: underline; cursor: pointer; font-weight: 700; margin: 0 3px; }
+
+
+        
+        /* ============ CUSTOMER APP (prefixed u-) ============ */
+        .u-phone-frame {
+            width: 360px; height: 780px;
+            background-color: #000; border-radius: 50px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border: 12px solid #2e2e2e; position: relative;
+            overflow: hidden;
+        }
+        .u-notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100px; height: 28px; background-color: #000;
+            border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; z-index: 999;
+        }
+        .u-timeline { width: 100%; height: 100%; position: relative; }
+
+        .u-screen {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            background-size: cover; background-position: center; opacity: 0; pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .u-screen.active { opacity: 1; pointer-events: auto; }
+
+        .u-bg-overlay {
+            position: absolute; width: 100%; height: 100%;
+            background: linear-gradient(180deg, rgba(230,0,111,0.85) 0%, rgba(15,23,42,0.95) 100%);
+            display: flex; flex-direction: column; padding: 54px 22px;
+        }
+        #u-lock-screen { background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=600'); }
+        .u-lock-header { text-align: center; margin-top: 10px; margin-bottom: 20px; }
+        .u-lock-header i { font-size: 18px; margin-bottom: 8px; opacity: 0.9; }
+        .u-lock-header h2 { font-size: 54px; font-weight: 400; letter-spacing: -1px; }
+        .u-lock-header p { font-size: 14px; opacity: 0.8; }
+
+        .u-notif-card {
+            background: rgba(255, 255, 255, 0.95); border-radius: 18px; padding: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); color: #000;
+            border: 1px solid rgba(255,255,255,0.5); transform: scale(1);
+            transition: transform 0.15s ease; cursor: pointer;
+        }
+        .u-notif-card:hover { transform: scale(1.02); }
+        .u-notif-card:active { transform: scale(0.97); }
+        .u-notif-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .u-notif-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #ff2f8f; font-size: 13px; }
+        .u-notif-brand i { background: #ff2f8f; color: white; padding: 4px; border-radius: 6px; font-size: 9px; }
+        .u-notif-time { font-size: 11px; color: #64748b; }
+        .u-notif-body h4 { font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 2px; }
+        .u-notif-body p { font-size: 12px; color: #475569; line-height: 1.4; }
+        .u-tap-hint { text-align: center; font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 10px; }
+        .u-empty-lock { text-align: center; font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 20px; }
+
+        #u-app-screen { background-color: #f8fafc; color: #0f172a; display: flex; flex-direction: column; padding: 46px 18px 20px; transform: translateY(20px); }
+        #u-app-screen.active { transform: translateY(0); }
+        .u-app-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .u-app-header i { font-size: 18px; color: #475569; cursor: pointer; }
+        .u-app-header h3 { font-size: 15px; font-weight: 600; }
+        .u-app-header span { font-size: 13px; color: #ff2f8f; font-weight: 500; }
+
+        #u-review-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: 6px; }
+
+        .u-review-card {
+            background: #ffffff; border-radius: 20px; padding: 18px; margin-bottom: 14px;
+            border: 1px solid #eef1f5; box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+        }
+        .u-card-head { display: flex; gap: 12px; margin-bottom: 15px; }
+        .u-head-icon {
+            width: 42px; height: 42px; border-radius: 13px; background: #fef3e0; color: #f97316;
+            display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0;
+        }
+        .u-head-icon.sub { background: #f3e8ff; color: #7c3aed; }
+        .u-card-head h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
+        .u-card-head p { font-size: 11.5px; color: #64748b; line-height: 1.45; }
+        .u-card-timer {
+            display: inline-flex; align-items: center; gap: 5px; background: #f3e8ff; color: #6b21a8;
+            font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 7px; margin-top: 6px;
+        }
+
+        .u-product-box { display: flex; align-items: center; gap: 13px; background: #f8fafc; border-radius: 14px; padding: 12px; margin-bottom: 14px; }
+        .u-product-img { width: 54px; height: 54px; border-radius: 11px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 25px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .u-product-info { flex-grow: 1; min-width: 0; }
+        .u-product-info h5 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px; line-height: 1.3; }
+        .u-pd-row { display: flex; align-items: center; gap: 14px; }
+        .u-pd-col { display: flex; flex-direction: column; gap: 2px; }
+        .u-pd-label { font-size: 9.5px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+        .u-pd-divider { width: 1px; align-self: stretch; background: #e2e8f0; }
+        .u-price-old { font-size: 12px; color: #94a3b8; text-decoration: line-through; font-weight: 600; }
+        .u-price-new { font-size: 13px; color: #ef4444; font-weight: 800; }
+
+        /* Compact side-by-side compare used inside substitute product boxes */
+        .u-swap-row { display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0; }
+        .u-swap-side { text-align: center; flex: 1; min-width: 0; }
+        .u-swap-side .u-product-img { margin: 0 auto 6px; width: 40px; height: 40px; font-size: 19px; }
+        .u-swap-side p { font-size: 10.5px; font-weight: 600; line-height: 1.25; margin-bottom: 2px; }
+        .u-swap-row > i { color: #c4b5fd; font-size: 13px; flex-shrink: 0; }
+
+        .u-bulk-action {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+            padding: 12px; margin-bottom: 12px;
+        }
+        .u-bulk-action p { font-size: 11px; color: #64748b; line-height: 1.45; margin-bottom: 9px; }
+        .u-bulk-action .u-action-btn { width: 100%; }
+
+        /* When combined price changes exceed EGP 50, each item is a closed row
+           that expands downward to reveal its own Accept price / Remove item actions. */
+        .u-price-accordion { cursor: pointer; -webkit-tap-highlight-color: rgba(255,47,143,0.12); }
+        .u-price-accordion:not(.open):active { background: #fff5fa; }
+        .u-price-accordion-head {
+            width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 2px 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer;
+        }
+        .u-accordion-hint { display: block; margin-top: 4px; color: #ff2f8f; font-size: 10px; font-weight: 700; }
+        .u-price-accordion-summary { display: flex; align-items: center; gap: 11px; min-width: 0; flex: 1; }
+        .u-price-accordion-summary .u-head-icon { flex-shrink: 0; }
+        .u-price-accordion-copy { min-width: 0; flex: 1; }
+        .u-price-accordion-copy h4 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .u-price-accordion-copy p { font-size: 11px; color: #64748b; line-height: 1.35; }
+        .u-price-accordion-copy .u-price-old { margin-right: 5px; }
+        .u-price-accordion-chevron { color: #64748b; font-size: 13px; transition: transform .2s ease; flex-shrink: 0; }
+        .u-price-accordion.open .u-price-accordion-chevron { transform: rotate(180deg); }
+        .u-price-accordion-details { display: none; padding-top: 13px; }
+        .u-price-accordion.open .u-price-accordion-details { display: block; }
+
+        .u-review-footer {
+            flex: 0 0 auto; padding-top: 10px; margin-top: 2px; background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+        .u-review-footer:empty { display: none; }
+        .u-review-footer .u-action-stack { gap: 8px; }
+
+        .u-action-stack { display: flex; flex-direction: column; gap: 9px; }
+        .u-action-btn {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 13px;
+            border-radius: 13px; border: 1.5px solid; cursor: pointer; transition: transform .1s;
+        }
+        .u-action-btn:active { transform: scale(0.98); }
+        .u-action-left { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 12.5px; }
+        .u-action-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10.5px; flex-shrink: 0; }
+        .u-action-btn .u-chev { font-size: 11px; }
+
+        .u-action-btn.accept { background: #f0fdf4; border-color: #bbf7d0; color: #16a34a; }
+        .u-action-btn.accept .u-action-icon { background: #16a34a; color: #fff; }
+        .u-action-btn.accept .u-chev { color: #16a34a; }
+
+        .u-action-btn.replace { background: #faf5ff; border-color: #e9d5ff; color: #7c3aed; }
+        .u-action-btn.replace .u-action-icon { background: transparent; color: #7c3aed; font-size: 14px; }
+        .u-action-btn.replace .u-chev { color: #7c3aed; }
+
+        .u-action-btn.remove { background: #fff7ed; border-color: #fed7aa; color: #ea580c; }
+        .u-action-btn.remove .u-action-icon { background: transparent; color: #ea580c; font-size: 14px; }
+        .u-action-btn.remove .u-chev { color: #ea580c; }
+
+        .u-action-btn.cancel { background: #fef2f2; border-color: #fecaca; color: #dc2626; margin-top: 4px; }
+        .u-action-btn.cancel .u-action-icon { background: #dc2626; color: #fff; }
+        .u-action-btn.cancel .u-chev { color: #dc2626; }
+
+        .u-cancel-order { margin-top: 4px; }
+
+        .u-empty { text-align: center; color: #94a3b8; font-size: 12.5px; padding: 30px 10px; }
+
+        .u-done-panel { text-align: center; padding-top: 60px; }
+        .u-done-panel i { font-size: 38px; margin-bottom: 14px; }
+        .u-done-panel h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .u-done-panel p { font-size: 12.5px; color: #64748b; max-width: 220px; margin: 0 auto; }
+
+        .u-footer-brand { text-align: center; font-size: 10.5px; color: #94a3b8; margin-top: auto; padding-top: 10px; }
+        .u-footer-brand span { color: #ff2f8f; font-weight: 600; }
+
+        .u-toast {
+            position: absolute; left: 50%; bottom: 26px; transform: translate(-50%, 16px);
+            background: #0f172a; color: #fff; padding: 12px 18px; border-radius: 14px;
+            font-size: 12.5px; font-weight: 500; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25); opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease; z-index: 500; white-space: nowrap;
+        }
+        .u-toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .u-toast i { color: #4ade80; }
+
+        /* Weight adjustment: green when the total goes up, red when it goes down */
+        .delta-badge.more { background: #dcfce7; color: #16a34a; }
+        .delta-badge.less { background: #fee2e2; color: #dc2626; }
+        .wa-more { color: #16a34a; }
+        .wa-less { color: #dc2626; }
+        .confirm-banner strong.wa-more, .change-prices .new.wa-more, .u-price-new.wa-more { color: #16a34a; }
+        .confirm-banner strong.wa-less, .change-prices .new.wa-less, .u-price-new.wa-less { color: #dc2626; }
+        /* Shop phone freeze while the customer decides */
+        .freeze-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 950;
+            background: rgba(248, 250, 252, 0.97); backdrop-filter: blur(6px);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 46px 26px 26px;
+        }
+        .freeze-overlay.show { display: flex; }
+        .freeze-icon { width: 68px; height: 68px; border-radius: 50%; background: #fdeef5; color: #ff2f8f; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px; }
+        .freeze-overlay.cancelled .freeze-icon { background: #fee2e2; color: #dc2626; }
+        .freeze-overlay h3 { font-size: 19px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+        .freeze-sub { font-size: 12.5px; color: #64748b; line-height: 1.5; margin-bottom: 18px; }
+        .freeze-timer { font-size: 46px; font-weight: 800; color: #0f172a; letter-spacing: 1px; font-variant-numeric: tabular-nums; line-height: 1; }
+        .freeze-timer-label { font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.6px; text-transform: uppercase; margin-top: 6px; }
+        .freeze-bar { width: 100%; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin: 16px 0 14px; }
+        .freeze-bar span { display: block; height: 100%; width: 100%; background: #ff2f8f; border-radius: 999px; transition: width 1s linear; }
+        .freeze-waiting-on { font-size: 12px; color: #475569; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; width: 100%; }
+        /* What the customer chose, shown on the shop's review rows */
+        .delta-badge.choice { font-size: 10px; letter-spacing: 0.4px; }
+        .delta-badge.choice-accepted { background: #dcfce7; color: #16a34a; }
+        .delta-badge.choice-removed { background: #ffedd5; color: #ea580c; }
+        .delta-badge.choice-cancelled { background: #fee2e2; color: #dc2626; }
+        .delta-badge.choice-replace { background: #ede9fe; color: #7c3aed; }
+        .choice-note { font-size: 11px; font-weight: 700; margin-top: 3px; }
+        .choice-note.choice-accepted { color: #16a34a; }
+        .choice-note.choice-removed { color: #ea580c; }
+        .choice-note.choice-cancelled { color: #dc2626; }
+        .choice-note.choice-replace { color: #7c3aed; }
+        /* Tabs were squeezed by the flex column, slicing the words in half */
+        .tabs { flex-shrink: 0; padding-top: 2px; padding-bottom: 12px; }
+        .tab { flex-shrink: 0; line-height: 1.3; }
+        .tab.active::after { bottom: -13px; }
+
+        /* Orders main menu */
+        .orders-sub { font-size: 12px; color: #94a3b8; margin: -4px 0 12px; }
+        .order-avatar { display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; }
+        .status-tag.new { background: #fdeef5; color: #ff2f8f; }
+        .status-tag.progress { background: #f3e8ff; color: #7c3aed; }
+        .status-tag.completed { background: #dcfce7; color: #16a34a; }
+        .status-tag.cancelled { background: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <h1>InstaShop — Connected Seller &amp; Customer Simulator</h1>
+        <p>Price changes and substitute suggestions are queued and sent together. If combined price differences exceed EGP 50, each item expands to show its own Accept price and Remove item actions, with Accept all and Cancel whole order kept at the bottom. Substitute offers give a 6-minute response window, and every outcome is reflected back to the seller with a full activity log. Weight adjustments of EGP 50 or less are applied automatically and can be acknowledged together; adjustments above EGP 50 expand per item with Accept price and Remove item, with Accept all weight adjustments and Cancel whole weight adjustment kept at the bottom. Once the shop sends anything that needs a decision, the shop's phone freezes with the same countdown until the customer responds, the timer ends, or the order is cancelled. Continue to Checkout only appears when nothing is waiting on the customer.</p>
+        <button class="reset-btn" onclick="location.reload()">Reset Demo</button>
+    </div>
+
+    <div class="stage">
+        <div class="phone-col">
+            <div class="col-label seller-label"><span class="dot"></span> Seller App</div>
+            <div class="phone-frame">
+        <div class="notch"></div>
+
+        <!-- SCREEN 10: ORDERS (MAIN MENU) -->
+        <div id="scr10" class="screen active">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header">
+                <span style="width:30px;"></span>
+                <h3>Orders</h3>
+                <i class="fa-regular fa-bell icon-btn"></i>
+            </div>
+            <p class="orders-sub" id="orders-sub"></p>
+            <div class="item-list" id="orders-list"></div>
+            <div class="footer-brand">Powered by <span>Instashop</span></div>
+        </div>
+
+        <!-- SCREEN 1: ORDER LIST -->
+        <div id="scr1" class="screen">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header">
+                <i class="fa-solid fa-chevron-left icon-btn" onclick="goToOrders()" title="Back to all orders"></i>
+                <h3 id="order-title">Your Order</h3>
+                <i class="fa-regular fa-comment icon-btn"></i>
+            </div>
+            <div class="sync-banner" id="sync-banner"></div>
+            <div class="activity-log" id="activity-log"></div>
+
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Search for items..." oninput="handleSearch(this.value)">
+                <div class="filter-btn"><i class="fa-solid fa-sliders"></i></div>
+            </div>
+
+            <div class="tabs" id="tabs-row">
+                <div class="tab active" data-cat="All" onclick="setCategory('All')">All Items</div>
+                <div class="tab" data-cat="Fruits & Veg" onclick="setCategory('Fruits & Veg')">Fruits &amp; Veg</div>
+                <div class="tab" data-cat="Dairy" onclick="setCategory('Dairy')">Dairy</div>
+                <div class="tab" data-cat="Beverages" onclick="setCategory('Beverages')">Beverages</div>
+                <div class="tab" data-cat="Snacks" onclick="setCategory('Snacks')">Snacks</div>
+                <div class="tab" data-cat="Household" onclick="setCategory('Household')">Household</div>
+            </div>
+
+            <div class="item-list" id="item-list"></div>
+
+            <div class="list-footer">
+                <div>
+                    <div class="count" id="footer-count">5 Items</div>
+                    <div class="view-details">View Details <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i></div>
+                </div>
+                <button class="total-btn" onclick="goToReview()">EGP <span id="footer-total">268</span> <i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: ITEM DETAIL -->
+        <div id="scr2" class="screen">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header">
+                <i class="fa-solid fa-chevron-left icon-btn" onclick="goTo(1)"></i>
+                <h3>Item Details</h3>
+                <i class="fa-solid fa-trash icon-btn danger" onclick="removeItem()"></i>
+            </div>
+
+            <div class="product-visual" id="detail-visual"></div>
+            <h3 class="detail-title" id="detail-title">Item name</h3>
+            <p class="detail-meta" id="detail-meta">Category | Unit</p>
+
+            <div class="info-card">
+                <div class="info-row"><span>Price</span><span id="detail-price">EGP 0</span></div>
+                <div class="info-row"><span>Quantity</span><span>1 Unit</span></div>
+            </div>
+
+            <button class="btn btn-pink-outline" onclick="openPriceModal()"><i class="fa-solid fa-pen"></i> Change Price</button>
+            <button class="btn btn-outline" onclick="openWeightModal()"><i class="fa-solid fa-weight-scale"></i> Weight Adjustment</button>
+            <button class="btn btn-outline" onclick="openAlternatives(2)"><i class="fa-solid fa-arrows-rotate"></i> Select Alternative Item</button>
+
+            <div class="link-remove" onclick="removeItem()"><i class="fa-solid fa-trash"></i> Remove Item</div>
+        </div>
+
+        <!-- SCREEN 3: CHANGE PRICE MODAL (overlays screen 2) -->
+        <div id="scr3" class="screen">
+            <div class="status-row" style="opacity:0.35;"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header" style="opacity:0.35;">
+                <i class="fa-solid fa-chevron-left icon-btn"></i>
+                <h3>Item Details</h3>
+                <i class="fa-solid fa-trash icon-btn danger"></i>
+            </div>
+            <div class="product-visual" id="detail-visual-dim" style="opacity:0.35;"></div>
+
+            <div class="modal-dim" onclick="closePriceModal()"></div>
+            <div class="modal-sheet">
+                <div class="modal-head">
+                    <h4>Change Price</h4>
+                    <i class="fa-solid fa-xmark" onclick="closePriceModal()"></i>
+                </div>
+
+                <label class="field-label">OLD PRICE</label>
+                <input class="field-input" id="old-price-field" type="text" readonly>
+
+                <label class="field-label">NEW PRICE</label>
+                <input class="field-input editable" id="new-price-field" type="number" placeholder="EGP" inputmode="decimal">
+
+                <p class="helper-text">
+                    Enter the new price for this item
+                    <span class="ar">أدخل السعر الجديد لهذا المنتج</span>
+                </p>
+
+                <button class="btn btn-pink-outline" style="background:#ff2f8f; color:#fff; border:none;" onclick="submitNewPrice()">Continue</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 9: WEIGHT ADJUSTMENT MODAL (overlays screen 2) -->
+        <div id="scr9" class="screen">
+            <div class="status-row" style="opacity:0.35;"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header" style="opacity:0.35;">
+                <i class="fa-solid fa-chevron-left icon-btn"></i>
+                <h3>Item Details</h3>
+                <i class="fa-solid fa-trash icon-btn danger"></i>
+            </div>
+            <div class="product-visual" id="detail-visual-dim-w" style="opacity:0.35;"></div>
+
+            <div class="modal-dim" onclick="closeWeightModal()"></div>
+            <div class="modal-sheet">
+                <div class="modal-head">
+                    <h4>Weight Adjustment</h4>
+                    <i class="fa-solid fa-xmark" onclick="closeWeightModal()"></i>
+                </div>
+
+                <label class="field-label">CURRENT PRICE</label>
+                <input class="field-input" id="wa-old-field" type="text" readonly>
+
+                <label class="field-label">TOTAL PRICE WITH WEIGHT ADJUSTMENT</label>
+                <input class="field-input editable" id="wa-new-field" type="number" placeholder="EGP" inputmode="decimal" oninput="updateWeightPreview()">
+
+                <p class="helper-text" style="margin-bottom:6px;">
+                    Enter the total price of this item with the new weight adjustment
+                    <span class="ar">أدخل السعر الإجمالي للمنتج بعد تعديل الوزن</span>
+                </p>
+                <p class="helper-text" id="wa-preview" style="font-weight:700; min-height:16px;"></p>
+
+                <button class="btn btn-pink-outline" style="background:#ff2f8f; color:#fff; border:none;" onclick="submitWeightAdjustment()">Add Weight Adjustment</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: CONFIRMATION -->
+        <div id="scr4" class="screen">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header">
+                <i class="fa-solid fa-chevron-left icon-btn" onclick="goTo(2)"></i>
+                <h3>Confirm Change</h3>
+                <span style="width:30px;"></span>
+            </div>
+
+            <div class="confirm-icon">
+                <i class="fa-solid fa-tag tag"></i>
+                <i class="fa-solid fa-check check"></i>
+            </div>
+            <h3 class="confirm-title">Change Price?</h3>
+            <p class="confirm-sub">
+                You are about to change the price of <strong id="confirm-item-name">Item</strong>.
+                <span class="ar">يرجى تأكيد تغيير السعر لهذا المنتج.</span>
+            </p>
+
+            <div class="price-compare">
+                <div class="pc-row"><span class="lbl">Old Price</span><span class="old-val" id="confirm-old-price">EGP 0</span></div>
+                <div class="pc-divider"></div>
+                <div class="pc-row"><span class="lbl">New Price</span><span class="new-val" id="confirm-new-price">EGP 0</span></div>
+            </div>
+
+            <div style="margin-top: auto;">
+                <button class="btn btn-green" onclick="confirmChange()"><i class="fa-solid fa-circle-check"></i> Confirm Change</button>
+                <button class="btn btn-outline" onclick="confirmChangeAndOfferSubstitute()"><i class="fa-solid fa-arrows-rotate"></i> Select Alternative Item</button>
+                <div class="link-remove" style="color:#94a3b8; margin-top: 4px;" onclick="cancelChange()">Cancel</div>
+            </div>
+        </div>
+
+        <!-- SCREEN 8: REVIEW PRICE CHANGES -->
+        <div id="scr8" class="screen">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header">
+                <i class="fa-solid fa-chevron-left icon-btn" onclick="goTo(1)"></i>
+                <h3>Review Price Changes</h3>
+                <span style="width:30px;"></span>
+            </div>
+            <p class="detail-meta" style="text-align:left; margin-bottom: 12px;">Price changes and substitute suggestions made in this session will be shared with the customer before checkout.</p>
+
+            <div class="item-list" id="review-list"></div>
+
+            <div class="notified-banner" id="review-notified-banner" style="display:none;">
+                <i class="fa-solid fa-circle-check"></i> Notification sent to customer
+            </div>
+
+            <div style="margin-top: auto;">
+                <button class="btn btn-green" id="review-submit-btn" onclick="submitChanges()"><i class="fa-solid fa-bell"></i> Submit &amp; Notify Customer</button>
+                <button class="btn btn-outline" id="review-continue-btn" onclick="goToCheckout()">Continue to Checkout</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: CHECKOUT -->
+        <div id="scr5" class="screen">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header">
+                <i class="fa-solid fa-chevron-left icon-btn" onclick="goTo(1)"></i>
+                <h3>Checkout</h3>
+                <span style="width:30px;"></span>
+            </div>
+
+            <div class="summary-card" id="checkout-summary"></div>
+
+            <div class="breakdown-card">
+                <div class="breakdown-row"><span>Subtotal</span><span id="co-subtotal">EGP 0</span></div>
+                <div class="breakdown-row"><span>Service Fee</span><span id="co-service">EGP 15</span></div>
+                <div class="breakdown-row"><span>Delivery Fee</span><span id="co-delivery">EGP 20</span></div>
+                <div class="breakdown-total"><span class="lbl">Total</span><span class="val" id="co-total">EGP 0</span></div>
+            </div>
+
+            <div class="confirm-banner">
+                Are you sure you want to complete this order at
+                <strong id="co-confirm-total">EGP 0</strong>?
+            </div>
+
+            <div style="margin-top: auto;">
+                <button class="btn btn-green" onclick="placeOrder()"><i class="fa-solid fa-circle-check"></i> Confirm and Complete Order</button>
+                <button class="btn btn-outline" onclick="goTo(1)">Go Back</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 6: ORDER CONFIRMED -->
+        <div id="scr6" class="screen">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="success-wrap">
+                <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+                <h3>Order Confirmed!</h3>
+                <p>The order has been placed at the reviewed price and sent for fulfillment.</p>
+                <div class="success-total"><span>TOTAL CHARGED</span><span id="success-total">EGP 0</span></div>
+                <button class="btn btn-outline" style="width: 200px; margin-top: 0;" onclick="goTo(1)">Back to Order</button>
+                <button class="btn btn-pink-outline" style="width: 200px; margin-top: 10px; background:#ff2f8f; color:#fff; border:none;" onclick="goToOrders()"><i class="fa-solid fa-list"></i> Back to All Orders</button>
+            </div>
+            <div class="footer-brand">Powered by <span>Instashop</span></div>
+        </div>
+
+        <!-- SCREEN 7: SELECT ALTERNATIVE ITEM -->
+        <div id="scr7" class="screen">
+            <div class="status-row"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="app-header">
+                <i class="fa-solid fa-chevron-left icon-btn" onclick="goTo(altReturnScreen)"></i>
+                <h3>Select Alternative</h3>
+                <span style="width:30px;"></span>
+            </div>
+            <p class="detail-meta" id="alt-subtitle" style="text-align:left; margin-bottom: 12px;">Similar items in this category</p>
+            <div class="item-list" id="alt-list"></div>
+        </div>
+
+        <div class="freeze-overlay" id="freeze-overlay"></div>
+
+        <div class="toast" id="toast">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="toast-text">Done</span>
+        </div>
+    </div>
+
+    
+        </div>
+
+        <div class="arrow-hint">
+            <i class="fa-solid fa-arrows-left-right"></i>
+            Live sync
+        </div>
+
+        <div class="phone-col">
+            <div class="col-label customer-label"><span class="dot"></span> Customer App</div>
+            <div class="u-phone-frame">
+        <div class="u-notch"></div>
+        <div class="u-timeline">
+
+            <!-- LOCK SCREEN -->
+            <div id="u-lock-screen" class="u-screen active">
+                <div class="u-bg-overlay">
+                    <div class="u-lock-header">
+                        <i class="fa-solid fa-lock"></i>
+                        <h2>3:30</h2>
+                        <p>Tuesday, July 7</p>
+                    </div>
+                    <div id="u-notif-wrap"></div>
+                </div>
+            </div>
+
+            <!-- APP SCREEN -->
+            <div id="u-app-screen" class="u-screen">
+                <div class="u-app-header">
+                    <i class="fa-solid fa-chevron-left" id="u-back-btn" onclick="custGoTo('lock')"></i>
+                    <h3>Price Updates</h3>
+                    <span>Help</span>
+                </div>
+                <div id="u-review-body"></div>
+                <div id="u-review-footer" class="u-review-footer"></div>
+                <div class="u-footer-brand">Powered by <span>Instashop</span></div>
+            </div>
+
+            <div class="u-toast" id="u-toast">
+                <i class="fa-solid fa-circle-check"></i>
+                <span id="u-toast-text">Done</span>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </div>
+
+    <script>
+
+
+        const CATEGORY_ORDER = ["Fruits & Veg", "Dairy", "Beverages", "Snacks", "Household"];
+
+        // --- CROSS-APP SYNC STATE (shared with the Customer app on this page) ---
+        let syncState = { customerNotified: false, sellerNotified: false, orderCancelled: false };
+
+        const inventory = {
+            // Fruits & Veg
+            banana:    { title: "Banana Robusta",       category: "Fruits & Veg", type: "Fruit",     unit: "1 kg",     price: 35,  icon: "🍌", bg: "linear-gradient(135deg,#fde68a,#facc15)" },
+            tomato:    { title: "Fresh Tomatoes",        category: "Fruits & Veg", type: "Vegetable", unit: "1 kg",     price: 20,  icon: "🍅", bg: "linear-gradient(135deg,#fecaca,#ef4444)" },
+            apple:     { title: "Red Apples",            category: "Fruits & Veg", type: "Fruit",     unit: "1 kg",     price: 40,  icon: "🍎", bg: "linear-gradient(135deg,#fecdd3,#fb7185)" },
+            grapes:    { title: "Seedless Grapes",       category: "Fruits & Veg", type: "Fruit",     unit: "500 g",    price: 55,  icon: "🍇", bg: "linear-gradient(135deg,#e9d5ff,#a855f7)" },
+            cucumber:  { title: "Cucumbers",             category: "Fruits & Veg", type: "Vegetable", unit: "1 kg",     price: 15,  icon: "🥒", bg: "linear-gradient(135deg,#d9f99d,#65a30d)" },
+            potato:    { title: "Potatoes",              category: "Fruits & Veg", type: "Vegetable", unit: "2 kg",     price: 25,  icon: "🥔", bg: "linear-gradient(135deg,#fde68a,#ca8a04)" },
+
+            // Dairy
+            cheese:    { title: "Domty Cheese 250g",     category: "Dairy", type: "Cheese", unit: "1 box",    price: 28,  icon: "🧀", bg: "linear-gradient(135deg,#fbcfe8,#ec4899)" },
+            feta:      { title: "Feta Cheese",           category: "Dairy", type: "Cheese", unit: "200 g",    price: 32,  icon: "🧀", bg: "linear-gradient(135deg,#fae8ff,#c026d3)" },
+            mozzarella:{ title: "Mozzarella Cheese",     category: "Dairy", type: "Cheese", unit: "200 g",    price: 36,  icon: "🧀", bg: "linear-gradient(135deg,#fef3c7,#eab308)" },
+            cheddar:   { title: "Cheddar Slices",        category: "Dairy", type: "Cheese", unit: "150 g",    price: 40,  icon: "🧀", bg: "linear-gradient(135deg,#fed7aa,#ea580c)" },
+            halloumi:  { title: "Halloumi Cheese",       category: "Dairy", type: "Cheese", unit: "225 g",    price: 65,  icon: "🧈", bg: "linear-gradient(135deg,#fef3c7,#f59e0b)" },
+            milk:      { title: "Juhayna Full Cream Milk", category: "Dairy", type: "Milk", unit: "1 L",      price: 32,  icon: "🥛", bg: "linear-gradient(135deg,#e0f2fe,#38bdf8)" },
+            choco_milk:{ title: "Chocolate Milk",        category: "Dairy", type: "Milk", unit: "1 L",        price: 34,  icon: "🥛", bg: "linear-gradient(135deg,#e7d5c7,#78350f)" },
+            yogurt:    { title: "Greek Yogurt",          category: "Dairy", type: "Yogurt", unit: "400 g",    price: 38,  icon: "🍶", bg: "linear-gradient(135deg,#f1f5f9,#94a3b8)" },
+            straw_yog: { title: "Strawberry Yogurt",     category: "Dairy", type: "Yogurt", unit: "150 g",    price: 12,  icon: "🍶", bg: "linear-gradient(135deg,#fecdd3,#e11d48)" },
+            labneh:    { title: "Labneh",                category: "Dairy", type: "Labneh", unit: "500 g",    price: 42,  icon: "🥣", bg: "linear-gradient(135deg,#e2e8f0,#64748b)" },
+
+            // Beverages
+            juice:     { title: "Juhayna Pure Juice",    category: "Beverages", type: "Juice", unit: "1 L",      price: 45,  icon: "🧃", bg: "linear-gradient(135deg,#bbf7d0,#22c55e)" },
+            mango_juice:{ title: "Mango Juice",          category: "Beverages", type: "Juice", unit: "1 L",      price: 48,  icon: "🧃", bg: "linear-gradient(135deg,#fed7aa,#f97316)" },
+            water:     { title: "Sparkling Water",       category: "Beverages", type: "Water", unit: "1 L",      price: 12,  icon: "💧", bg: "linear-gradient(135deg,#dbeafe,#60a5fa)" },
+            still_water:{ title: "Still Water",          category: "Beverages", type: "Water", unit: "1.5 L",    price: 10,  icon: "💧", bg: "linear-gradient(135deg,#e0f2fe,#0ea5e9)" },
+            mineral_water:{ title: "Mineral Water",      category: "Beverages", type: "Water", unit: "600 ml",   price: 8,   icon: "💧", bg: "linear-gradient(135deg,#f0f9ff,#38bdf8)" },
+            soda:      { title: "Aranciata Soda",        category: "Beverages", type: "Soda", unit: "330 ml",   price: 18,  icon: "🥤", bg: "linear-gradient(135deg,#fed7aa,#fb923c)" },
+            cola:      { title: "Cola Can",              category: "Beverages", type: "Soda", unit: "330 ml",   price: 15,  icon: "🥤", bg: "linear-gradient(135deg,#fecaca,#b91c1c)" },
+            icedtea:   { title: "Iced Tea",               category: "Beverages", type: "Tea", unit: "500 ml",   price: 22,  icon: "🧉", bg: "linear-gradient(135deg,#fef9c3,#eab308)" },
+            green_tea: { title: "Green Tea Bottle",       category: "Beverages", type: "Tea", unit: "500 ml",   price: 20,  icon: "🧉", bg: "linear-gradient(135deg,#d9f99d,#4d7c0f)" },
+            coffee:    { title: "Turkish Coffee",        category: "Beverages", type: "Coffee", unit: "250 g",    price: 60,  icon: "☕", bg: "linear-gradient(135deg,#e7d5c7,#92400e)" },
+            instant_coffee: { title: "Instant Coffee",   category: "Beverages", type: "Coffee", unit: "200 g",    price: 55,  icon: "☕", bg: "linear-gradient(135deg,#e2e8f0,#57534e)" },
+
+            // Snacks
+            chips:     { title: "Chips Classic",         category: "Snacks", type: "Chips", unit: "150 g",    price: 25,  icon: "🍟", bg: "linear-gradient(135deg,#fef08a,#eab308)" },
+            spicy_chips:{ title: "Spicy Chips",          category: "Snacks", type: "Chips", unit: "150 g",    price: 25,  icon: "🍟", bg: "linear-gradient(135deg,#fecaca,#dc2626)" },
+            chocolate: { title: "Chocolate Bar",         category: "Snacks", type: "Chocolate", unit: "100 g",    price: 20,  icon: "🍫", bg: "linear-gradient(135deg,#e7d5c7,#78350f)" },
+            dark_choc: { title: "Dark Chocolate Bar",    category: "Snacks", type: "Chocolate", unit: "100 g",    price: 24,  icon: "🍫", bg: "linear-gradient(135deg,#d6d3d1,#292524)" },
+            nuts:      { title: "Mixed Nuts",            category: "Snacks", type: "Nuts", unit: "200 g",    price: 48,  icon: "🥜", bg: "linear-gradient(135deg,#fde68a,#b45309)" },
+            almonds:   { title: "Roasted Almonds",       category: "Snacks", type: "Nuts", unit: "200 g",    price: 52,  icon: "🥜", bg: "linear-gradient(135deg,#fef3c7,#a16207)" },
+            popcorn:   { title: "Popcorn",               category: "Snacks", type: "Popcorn", unit: "100 g",    price: 15,  icon: "🍿", bg: "linear-gradient(135deg,#fef9c3,#facc15)" },
+            biscuits:  { title: "Biscuits Pack",         category: "Snacks", type: "Biscuits", unit: "300 g",    price: 30,  icon: "🍪", bg: "linear-gradient(135deg,#fde8d0,#c2703d)" },
+
+            // Household
+            tissues:   { title: "Fine Tissues 10pk",     category: "Household", type: "Tissues", unit: "10 pack",  price: 50,  icon: "🧻", bg: "linear-gradient(135deg,#e2e8f0,#94a3b8)" },
+            detergent: { title: "Oxi Detergent",         category: "Household", type: "Detergent", unit: "3 L",      price: 110, icon: "🧴", bg: "linear-gradient(135deg,#bae6fd,#38bdf8)" },
+            liquid_detergent: { title: "Liquid Detergent", category: "Household", type: "Detergent", unit: "2 L",   price: 95,  icon: "🧴", bg: "linear-gradient(135deg,#d1fae5,#059669)" },
+            dishsoap:  { title: "Dish Soap",              category: "Household", type: "Dish Soap", unit: "750 ml",   price: 28,  icon: "🧼", bg: "linear-gradient(135deg,#d1fae5,#10b981)" },
+            trashbags: { title: "Trash Bags",             category: "Household", type: "Trash Bags", unit: "30 pack",  price: 35,  icon: "🗑️", bg: "linear-gradient(135deg,#e2e8f0,#475569)" },
+            airfresh:  { title: "Air Freshener",          category: "Household", type: "Air Freshener", unit: "300 ml",   price: 40,  icon: "🌸", bg: "linear-gradient(135deg,#fbcfe8,#db2777)" }
+        };
+
+        function meta(id) {
+            const p = inventory[id];
+            return `${p.category} | ${p.unit}`;
+        }
+
+        // The seller's current order — includes 25 items across every category
+        const order = Object.keys(inventory);
+
+        let activeId = null;
+        let pendingNewPrice = null;
+        let searchTerm = '';
+        let activeCategory = 'All';
+        let altReturnScreen = 2;
+
+        function calcSubtotal() {
+            return order.reduce((sum, id) => sum + inventory[id].price, 0);
+        }
+
+        function updateFooterTotals() {
+            const subtotal = calcSubtotal();
+            document.getElementById('footer-count').textContent = order.length + (order.length === 1 ? ' Item' : ' Items');
+            document.getElementById('footer-total').textContent = subtotal.toFixed(2).replace(/\.00$/, '');
+        }
+
+        function handleSearch(value) {
+            searchTerm = value.trim().toLowerCase();
+            renderList();
+        }
+
+        function setCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('#tabs-row .tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.cat === cat);
+            });
+            renderList();
+        }
+
+        function fmtPrice(n) {
+            return n.toFixed(2).replace(/\.00$/, '');
+        }
+
+        function itemRowHTML(id) {
+            const p = inventory[id];
+            const change = priceChanges[id];
+            let statusTag = '';
+            if (change && change.status === 'replace_requested') {
+                statusTag = `<span class="status-tag replace">NEEDS REPLACEMENT</span>`;
+            } else if (change && change.status === 'accepted') {
+                statusTag = `<span class="status-tag approved">APPROVED</span>`;
+            } else if (change && change.status === 'pending') {
+                statusTag = `<span class="status-tag pending">AWAITING CUSTOMER</span>`;
+            }
+
+            const wa = weightAdj[id];
+            if (wa && !statusTag) {
+                if (wa.status === 'queued') statusTag = `<span class="status-tag replace">WEIGHT ADJ.</span>`;
+                else if (wa.status === 'pending') statusTag = `<span class="status-tag pending">AWAITING CUSTOMER</span>`;
+                else if (wa.status === 'applied') statusTag = `<span class="status-tag approved">WEIGHT ADJUSTED</span>`;
+                else if (wa.status === 'accepted') statusTag = `<span class="status-tag approved">APPROVED</span>`;
+            }
+
+            const sub = substitutions[id];
+            let subLine = '';
+            if (sub) {
+                if (sub.status === 'queued') {
+                    subLine = `<div class="sub-inline queued"><i class="fa-solid fa-hourglass-half"></i> Substitute (${sub.subTitle}) queued — send with Submit &amp; Notify Customer</div>`;
+                } else if (sub.status === 'pending') {
+                    subLine = `<div class="sub-inline pending"><i class="fa-solid fa-paper-plane"></i> Substitute sent — <span id="seller-sub-timer-${id}">6:00</span> left to respond</div>`;
+                } else if (sub.status === 'pending_timeout_shown') {
+                    subLine = `<div class="sub-inline timeout">No response to substitute —
+                        <span onclick="event.stopPropagation(); resolveTimedOutSub('${id}','apply')">Use substitute</span> /
+                        <span onclick="event.stopPropagation(); resolveTimedOutSub('${id}','remove')">Remove item</span>
+                    </div>`;
+                }
+                // 'accepted' / 'declined' substitution outcomes are shown via the Activity Log instead,
+                // since the row itself changes (swapped item) or disappears (removed) at that point.
+            }
+
+            return `
+                <div class="list-item ${id === activeId ? 'selected' : ''}" onclick="openItem('${id}')">
+                    <div class="thumb" style="background:${p.bg}">${p.icon}</div>
+                    <div class="item-info">
+                        <h5>${p.title}${statusTag}</h5>
+                        <p>${meta(id)}</p>
+                        <div class="item-price${p.updated ? ' updated' : ''}">EGP ${fmtPrice(p.price)}</div>
+                        ${subLine}
+                    </div>
+                    <span class="qty-badge">1</span>
+                </div>`;
+        }
+
+        function renderList() {
+            const list = document.getElementById('item-list');
+            const visibleIds = order.filter(id =>
+                inventory[id].title.toLowerCase().includes(searchTerm) &&
+                (activeCategory === 'All' || inventory[id].category === activeCategory)
+            );
+
+            if (visibleIds.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:12.5px; padding:30px 10px;">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size:20px; display:block; margin-bottom:8px;"></i>
+                    No items match${searchTerm ? ` "${searchTerm}"` : ' this filter'}
+                </div>`;
+            } else if (activeCategory === 'All') {
+                // Group and sort items under their category headings
+                let html = '';
+                CATEGORY_ORDER.forEach(cat => {
+                    const inCat = visibleIds.filter(id => inventory[id].category === cat)
+                        .sort((a, b) => inventory[a].title.localeCompare(inventory[b].title));
+                    if (inCat.length === 0) return;
+                    html += `<div class="cat-header">${cat} (${inCat.length})</div>`;
+                    html += inCat.map(itemRowHTML).join('');
+                });
+                list.innerHTML = html;
+            } else {
+                const sorted = [...visibleIds].sort((a, b) => inventory[a].title.localeCompare(inventory[b].title));
+                list.innerHTML = sorted.map(itemRowHTML).join('');
+            }
+            updateFooterTotals();
+        }
+
+        function setStep(n) {
+            if (!document.getElementById('dot-1')) return; // the step tracker isn't on this page
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById('dot-' + i);
+                dot.classList.remove('current', 'done');
+                if (i < n) dot.classList.add('done');
+                if (i === n) dot.classList.add('current');
+                if (i < 4) document.getElementById('line-' + i).classList.toggle('done', i < n);
+            }
+        }
+
+        function goTo(n) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('scr' + n).classList.add('active');
+            setStep(n);
+        }
+
+        function openItem(id) {
+            if (syncState.completed) { showToast('This order is already completed'); return; }
+            activeId = id;
+            const p = inventory[id];
+            document.getElementById('detail-visual').style.background = p.bg;
+            document.getElementById('detail-visual').textContent = p.icon;
+            document.getElementById('detail-visual-dim').style.background = p.bg;
+            document.getElementById('detail-visual-dim').textContent = p.icon;
+            document.getElementById('detail-title').textContent = p.title;
+            document.getElementById('detail-meta').textContent = meta(id);
+            document.getElementById('detail-price').textContent = 'EGP ' + fmtPrice(p.price);
+            renderList();
+            goTo(2);
+        }
+
+        function openPriceModal() {
+            const p = inventory[activeId];
+            document.getElementById('old-price-field').value = 'EGP ' + fmtPrice(p.price);
+            document.getElementById('new-price-field').value = '';
+            goTo(3);
+        }
+
+        function closePriceModal() {
+            goTo(2);
+        }
+
+        function submitNewPrice() {
+            const val = document.getElementById('new-price-field').value;
+            if (!val || parseFloat(val) <= 0) {
+                document.getElementById('new-price-field').style.borderColor = '#ef4444';
+                document.getElementById('new-price-field').placeholder = 'Enter a valid price';
+                return;
+            }
+            pendingNewPrice = parseFloat(val);
+            const p = inventory[activeId];
+            document.getElementById('confirm-item-name').textContent = p.title;
+            document.getElementById('confirm-old-price').textContent = 'EGP ' + fmtPrice(p.price);
+            document.getElementById('confirm-new-price').textContent = 'EGP ' + fmtPrice(pendingNewPrice);
+            goTo(4);
+        }
+
+        let priceChanges = {}; // id -> { title, icon, bg, oldPrice, newPrice, status }
+        let changesDirty = false; // true when there are changes not yet submitted/notified
+
+        // --- WEIGHT ADJUSTMENTS ---
+        const WEIGHT_ADJ_THRESHOLD = 50; // EGP: above this total the customer must accept each item or remove it
+        let weightAdj = {}; // id -> { title, icon, bg, oldPrice, newPrice, status: 'queued' | 'pending' | 'applied' | 'accepted' | 'removed' | 'cancelled' }
+        // unseenOnly: skip auto-applied adjustments the customer has already dismissed
+        function weightTotal(statuses, unseenOnly) {
+            return Object.values(weightAdj)
+                .filter(w => statuses.includes(w.status) && (!unseenOnly || !w.seen))
+                .reduce((s, w) => s + (w.newPrice - w.oldPrice), 0);
+        }
+        // Colours for the adjustment number: green when it goes up, red when it goes down
+        function waCls(d) { return d > 0 ? 'wa-more' : d < 0 ? 'wa-less' : ''; }
+        function waDelta(d) { return `${d < 0 ? '−' : '+'}EGP ${fmtPrice(Math.abs(d))}`; }
+        // What the customer chose for a price change / weight adjustment (null until they have chosen)
+        function customerChoice(item, kind) {
+            switch (item.status) {
+                case 'accepted': return { key: 'accepted', badge: 'ACCEPTED', note: `Customer accepted EGP ${fmtPrice(item.newPrice)}` };
+                case 'removed': return { key: 'removed', badge: 'REMOVED', note: 'Customer removed this item' };
+                case 'replace_requested': return { key: 'replace', badge: 'REPLACE', note: 'Customer asked for a replacement' };
+                case 'cancelled': return { key: 'cancelled', badge: 'CANCELLED', note: kind === 'weight' ? `Customer cancelled the weight adjustment, back to EGP ${fmtPrice(item.oldPrice)}` : 'Customer cancelled the order' };
+                case 'applied': return item.seen ? { key: 'accepted', badge: 'SEEN', note: 'Customer acknowledged this change' } : null;
+                default: return null;
+            }
+        }
+
+        function openWeightModal() {
+            const p = inventory[activeId];
+            const v = document.getElementById('detail-visual-dim-w');
+            v.style.background = p.bg;
+            v.textContent = p.icon;
+            document.getElementById('wa-old-field').value = 'EGP ' + fmtPrice(p.price);
+            const f = document.getElementById('wa-new-field');
+            f.value = '';
+            f.style.borderColor = '';
+            f.placeholder = 'EGP';
+            document.getElementById('wa-preview').textContent = '';
+            goTo(9);
+        }
+
+        function closeWeightModal() {
+            goTo(2);
+        }
+
+        function updateWeightPreview() {
+            const val = parseFloat(document.getElementById('wa-new-field').value);
+            const el = document.getElementById('wa-preview');
+            if (!val || val <= 0) { el.textContent = ''; return; }
+            const base = weightAdj[activeId] ? weightAdj[activeId].oldPrice : inventory[activeId].price;
+            const d = val - base;
+            el.style.color = d > 0 ? '#16a34a' : d < 0 ? '#dc2626' : '#64748b';
+            el.textContent = `Adjustment: ${waDelta(d)}`;
+        }
+
+        function submitWeightAdjustment() {
+            const f = document.getElementById('wa-new-field');
+            const val = parseFloat(f.value);
+            if (!val || val <= 0) {
+                f.style.borderColor = '#ef4444';
+                f.placeholder = 'Enter a valid price';
+                return;
+            }
+            const p = inventory[activeId];
+            if (!weightAdj[activeId]) {
+                weightAdj[activeId] = { title: p.title, icon: p.icon, bg: p.bg, oldPrice: p.price };
+            }
+            weightAdj[activeId].newPrice = val;
+            weightAdj[activeId].status = 'queued'; // sent (or auto-applied) with Submit & Notify Customer
+            p.price = val;
+            p.updated = true;
+            changesDirty = true;
+            renderList();
+            sellerRenderBanner();
+            showToast(`Weight adjustment added for ${p.title}`);
+            goTo(1);
+        }
+
+        function commitPriceChange() {
+            const p = inventory[activeId];
+            const prevPrice = p.price;
+            if (!priceChanges[activeId]) {
+                priceChanges[activeId] = { title: p.title, icon: p.icon, bg: p.bg, oldPrice: prevPrice };
+            }
+            priceChanges[activeId].newPrice = pendingNewPrice;
+            priceChanges[activeId].status = 'pending'; // (re)opens this item for customer review
+            p.price = pendingNewPrice;
+            p.updated = true;
+            changesDirty = true;
+            renderList();
+        }
+
+        function confirmChange() {
+            const p = inventory[activeId];
+            commitPriceChange();
+            showToast(`Price updated for ${p.title}`);
+            goTo(1);
+        }
+
+        // Keeps the pending price change AND lets the seller also queue a substitute for the
+        // same item, so the customer gets both options: accept the new price, or switch items.
+        function confirmChangeAndOfferSubstitute() {
+            const p = inventory[activeId];
+            commitPriceChange();
+            showToast(`Price updated for ${p.title} — now pick a substitute to offer as well`);
+            openAlternatives(4);
+        }
+
+        function cancelChange() {
+            showToast('Change cancelled');
+            goTo(2);
+        }
+
+        function removeItem() {
+            if (!activeId) return;
+            const idx = order.indexOf(activeId);
+            if (idx > -1) {
+                const p = inventory[activeId];
+                showToast(`${p.title} removed`);
+                delete weightAdj[activeId];
+                order.splice(idx, 1);
+                renderList();
+                goTo(1);
+            }
+        }
+
+        // --- ALTERNATIVE ITEM PICKER ---
+        const SUB_RESPONSE_SECONDS = 360; // 6 minutes for the customer to respond to a substitute offer
+        let substitutions = {}; // id -> { originalId, originalTitle, originalIcon, originalBg, originalPrice, subId, subTitle, subIcon, subBg, subPrice, status, deadline }
+        let activityLog = []; // { icon, cls, text, time }
+
+        function openAlternatives(fromScreen) {
+            altReturnScreen = fromScreen;
+            const current = inventory[activeId];
+
+            let options = Object.keys(inventory).filter(id =>
+                inventory[id].type === current.type && id !== activeId
+            );
+            let subtitleLabel = `other ${current.type} options`;
+
+            if (options.length === 0) {
+                options = Object.keys(inventory).filter(id =>
+                    inventory[id].category === current.category && id !== activeId
+                );
+                subtitleLabel = `other items in ${current.category}`;
+            }
+            options.sort((a, b) => inventory[a].title.localeCompare(inventory[b].title));
+
+            document.getElementById('alt-subtitle').textContent = `Showing ${subtitleLabel} — tap one to queue it as a substitute (sent when you notify the customer)`;
+
+            const list = document.getElementById('alt-list');
+            if (options.length === 0) {
+                list.innerHTML = `<div class="empty-state">
+                    <i class="fa-solid fa-box-open"></i>
+                    No alternatives available for this item right now.
+                </div>`;
+            } else {
+                list.innerHTML = options.map(id => {
+                    const p = inventory[id];
+                    return `
+                        <div class="list-item" onclick="proposeSubstitute('${id}')">
+                            <div class="thumb" style="background:${p.bg}">${p.icon}</div>
+                            <div class="item-info">
+                                <h5>${p.title}</h5>
+                                <p>${meta(id)}</p>
+                                <div class="item-price">EGP ${fmtPrice(p.price)}</div>
+                            </div>
+                            <i class="fa-solid fa-paper-plane" style="color:#cbd5e1; font-size:12px;"></i>
+                        </div>`;
+                }).join('');
+            }
+            goTo(7);
+        }
+
+        // Sends a substitute suggestion to the customer for approval — does NOT swap the item immediately.
+        function proposeSubstitute(subId) {
+            const orig = inventory[activeId];
+            const sub = inventory[subId];
+
+            substitutions[activeId] = {
+                originalId: activeId, originalTitle: orig.title, originalIcon: orig.icon, originalBg: orig.bg, originalPrice: orig.price,
+                subId: subId, subTitle: sub.title, subIcon: sub.icon, subBg: sub.bg, subPrice: sub.price,
+                status: 'queued', // waits here until "Submit & Notify Customer" actually sends it
+                deadline: null
+            };
+
+            changesDirty = true; // reuses the same "unsent changes" flag as price edits
+            renderList();
+            sellerRenderBanner();
+            showToast(`Substitute queued: ${sub.title} instead of ${orig.title} — send it with your next notification`);
+            goTo(1);
+        }
+
+        function removeQueuedSubstitute(id) {
+            if (substitutions[id] && substitutions[id].status === 'queued') {
+                delete substitutions[id];
+                renderList();
+                renderReviewScreen();
+                sellerRenderBanner();
+            }
+        }
+
+        // Seller manually resolves a substitute the customer never responded to in time.
+        function resolveTimedOutSub(id, action) {
+            const s = substitutions[id];
+            if (!s || s.status !== 'pending_timeout_shown') return;
+            const idx = order.indexOf(s.originalId);
+            if (action === 'apply') {
+                if (idx > -1) order[idx] = s.subId;
+                s.status = 'accepted';
+                logActivity('fa-solid fa-arrows-rotate', 'accept-sub', `You applied the substitute <strong>${s.subTitle}</strong> for <strong>${s.originalTitle}</strong> after no response.`);
+                showToast(`Applied substitute: ${s.subTitle}`);
+            } else {
+                if (idx > -1) order.splice(idx, 1);
+                s.status = 'declined';
+                logActivity('fa-solid fa-trash', 'remove', `You removed <strong>${s.originalTitle}</strong> after no response to the substitute offer.`);
+                showToast(`Removed ${s.originalTitle}`);
+            }
+            renderList();
+            sellerRenderBanner();
+        }
+
+        function logActivity(icon, cls, text) {
+            activityLog.unshift({ icon, cls, text, time: Date.now() });
+            renderActivityLog();
+        }
+
+        function timeAgo(ts) {
+            const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+            if (s < 5) return 'just now';
+            if (s < 60) return s + 's ago';
+            const m = Math.round(s / 60);
+            return m + 'm ago';
+        }
+
+        function renderActivityLog() {
+            const el = document.getElementById('activity-log');
+            if (!el) return;
+            if (activityLog.length === 0) { el.innerHTML = ''; return; }
+            el.innerHTML = activityLog.slice(0, 6).map(a => `
+                <div class="activity-item ${a.cls}">
+                    <i class="${a.icon}"></i>
+                    <div>${a.text}<span class="a-time">${timeAgo(a.time)}</span></div>
+                </div>
+            `).join('');
+        }
+
+        // --- SHOP FREEZE: the shop's phone pauses while the customer decides ---
+        let sellerFreeze = { active: false, deadline: 0, sig: '' };
+
+        function freezeLabel() {
+            const remain = Math.max(0, Math.ceil((sellerFreeze.deadline - Date.now()) / 1000));
+            return `${Math.floor(remain / 60)}:${String(remain % 60).padStart(2, '0')}`;
+        }
+
+        // True while the customer still has a decision to make and time left to make it
+        function freezeOn() {
+            return sellerFreeze.active && !syncState.sellerNotified && !syncState.orderCancelled && Date.now() < sellerFreeze.deadline;
+        }
+
+        // The shop can only check out when nothing is waiting on the customer: no substitute (queued or sent),
+        // no weight adjustment over the threshold that is still unsent, and no response countdown still running.
+        function canCheckout() {
+            const subsOpen = Object.values(substitutions).some(s => s.status === 'queued' || s.status === 'pending');
+            const weightUnsent = weightTotal(['queued']) > WEIGHT_ADJ_THRESHOLD;
+            return !subsOpen && !weightUnsent && !freezeOn() && !syncState.completed;
+        }
+
+        function startSellerFreeze(deadline) {
+            sellerFreeze = { active: true, deadline, sig: '' };
+            sellerRenderFreeze();
+            if (typeof custRenderNotifState === 'function') custRenderNotifState();
+            if (typeof custRenderReview === 'function') custRenderReview();
+        }
+
+        function freezeWaitingOn() {
+            const count = (obj, status) => Object.values(obj).filter(x => x.status === status).length;
+            const subs = count(substitutions, 'pending');
+            const prices = count(priceChanges, 'pending');
+            const weights = count(weightAdj, 'pending');
+            const bits = [];
+            if (subs) bits.push(`${subs} substitute${subs === 1 ? '' : 's'}`);
+            if (prices) bits.push(`${prices} price change${prices === 1 ? '' : 's'}`);
+            if (weights) bits.push(`${weights} weight adjustment${weights === 1 ? '' : 's'}`);
+            return bits.join(' · ');
+        }
+
+        function sellerRenderFreeze() {
+            const el = document.getElementById('freeze-overlay');
+            if (!el) return;
+            if (syncState.sellerNotified) sellerFreeze.active = false; // the customer has finished
+            const cancelled = syncState.orderCancelled;
+            const waiting = sellerFreeze.active && !cancelled;
+            const waitingOn = waiting ? freezeWaitingOn() : '';
+            const sig = cancelled ? 'cancelled' : (waiting ? 'waiting|' + waitingOn : 'off');
+            if (sig !== sellerFreeze.sig) {
+                sellerFreeze.sig = sig;
+                el.classList.toggle('show', cancelled || waiting);
+                el.classList.toggle('cancelled', cancelled);
+                if (cancelled) {
+                    el.innerHTML = `
+                        <div class="freeze-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                        <h3>Order cancelled</h3>
+                        <p class="freeze-sub">The customer cancelled this order, so there is nothing more to prepare or check out.</p>
+                        <button class="btn btn-pink-outline" style="background:#ff2f8f; color:#fff; border:none;" onclick="goToOrders()"><i class="fa-solid fa-arrow-left"></i> Back to all orders</button>`;
+                } else if (waiting) {
+                    el.innerHTML = `
+                        <div class="freeze-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <h3>Waiting for the customer</h3>
+                        <p class="freeze-sub">Your screen is paused until the customer responds or the timer ends. Then you can continue to checkout.</p>
+                        <div class="freeze-timer"><span class="freeze-clock">${freezeLabel()}</span></div>
+                        <div class="freeze-timer-label">left to respond</div>
+                        <div class="freeze-bar"><span id="freeze-bar-fill"></span></div>
+                        ${waitingOn ? `<div class="freeze-waiting-on">Waiting on: <strong>${waitingOn}</strong></div>` : ''}`;
+                } else {
+                    el.innerHTML = '';
+                }
+                // Continue to Checkout depends on whether the customer is still being waited on
+                renderReviewScreen();
+            }
+            sellerUpdateFreezeClock();
+        }
+
+        // Keeps every copy of the countdown (shop overlay, customer notification, customer banner) identical
+        function sellerUpdateFreezeClock() {
+            if (!sellerFreeze.active) return;
+            const label = freezeLabel();
+            document.querySelectorAll('.freeze-clock').forEach(e => { e.textContent = label; });
+            const fill = document.getElementById('freeze-bar-fill');
+            if (fill) {
+                const remain = Math.max(0, (sellerFreeze.deadline - Date.now()) / 1000);
+                fill.style.width = Math.min(100, (remain / SUB_RESPONSE_SECONDS) * 100) + '%';
+            }
+        }
+
+        // Every second: when the response time runs out the shop's phone unfreezes
+        function sellerTickFreeze() {
+            if (sellerFreeze.active && Date.now() >= sellerFreeze.deadline) {
+                sellerFreeze.active = false;
+                logActivity('fa-solid fa-hourglass-end', 'pending-sub', `The customer's response time ended, so your screen is unlocked. Anything they haven't answered stays pending.`);
+                sellerRenderBanner();
+                if (typeof custRenderNotifState === 'function') custRenderNotifState();
+                if (typeof custRenderReview === 'function') custRenderReview();
+            }
+            sellerRenderFreeze();
+        }
+
+        // Ticks every second: counts down pending substitute timers, auto-expires them, and
+        // keeps both apps' live countdown displays and activity log in sync.
+        setInterval(() => {
+            if (!currentOrderId) return; // no order open (shop is on the Orders menu)
+            let needsFullRerender = false;
+
+            Object.entries(substitutions).forEach(([id, s]) => {
+                if (s.status === 'pending' && Date.now() >= s.deadline) {
+                    s.status = 'pending_timeout_shown';
+                    logActivity('fa-solid fa-hourglass-end', 'pending-sub', `No response yet on the substitute for <strong>${s.originalTitle}</strong> — choose how to continue below.`);
+                    needsFullRerender = true;
+                }
+            });
+
+            // live countdown text (seller rows + customer cards) without a full re-render
+            Object.entries(substitutions).forEach(([id, s]) => {
+                if (s.status !== 'pending') return;
+                const remain = Math.max(0, Math.ceil((s.deadline - Date.now()) / 1000));
+                const mm = Math.floor(remain / 60), ss = remain % 60;
+                const label = `${mm}:${String(ss).padStart(2, '0')}`;
+                const sellerEl = document.getElementById('seller-sub-timer-' + id);
+                if (sellerEl) sellerEl.textContent = label;
+                const custEl = document.getElementById('u-sub-timer-' + id);
+                if (custEl) custEl.textContent = label;
+            });
+
+            if (needsFullRerender) {
+                renderList();
+                sellerRenderBanner();
+                if (typeof custRenderReview === 'function') custRenderReview();
+                if (typeof custRenderNotifState === 'function') custRenderNotifState();
+                if (typeof custCheckIfDone === 'function') custCheckIfDone();
+            }
+            sellerTickFreeze();
+        }, 1000);
+
+        const SERVICE_FEE = 15;
+        const DELIVERY_FEE = 20;
+
+        // --- REVIEW PRICE CHANGES ---
+        function goToReview() {
+            renderReviewScreen();
+            goTo(8);
+        }
+
+        function renderReviewScreen() {
+            const listEl = document.getElementById('review-list');
+            const banner = document.getElementById('review-notified-banner');
+            const submitBtn = document.getElementById('review-submit-btn');
+            const continueBtn = document.getElementById('review-continue-btn');
+
+            const priceIds = Object.keys(priceChanges);
+            const queuedSubIds = Object.keys(substitutions).filter(id => substitutions[id].status === 'queued');
+
+            const weightIds = Object.keys(weightAdj);
+
+            if (priceIds.length === 0 && queuedSubIds.length === 0 && weightIds.length === 0) {
+                listEl.innerHTML = `<div class="empty-state">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    No price changes or substitutes were made in this session.
+                </div>`;
+                submitBtn.style.display = 'none';
+                banner.style.display = 'none';
+                continueBtn.style.display = canCheckout() ? 'flex' : 'none';
+                return;
+            }
+
+            const priceRows = priceIds.map(id => {
+                const c = priceChanges[id];
+                const delta = c.newPrice - c.oldPrice;
+                const deltaClass = delta >= 0 ? 'up' : 'down';
+                const sign = delta >= 0 ? '+' : '';
+                const choice = customerChoice(c, 'price');
+                return `<div class="change-row">
+                    <div class="thumb" style="background:${c.bg}">${c.icon}</div>
+                    <div class="change-info">
+                        <h5>${c.title}</h5>
+                        <div class="change-prices">
+                            <span class="old">EGP ${fmtPrice(c.oldPrice)}</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span class="new">EGP ${fmtPrice(c.newPrice)}</span>
+                        </div>
+                        ${choice ? `<div class="choice-note choice-${choice.key}">${choice.note}</div>` : ''}
+                    </div>
+                    ${choice ? `<span class="delta-badge choice choice-${choice.key}">${choice.badge}</span>` : `<span class="delta-badge ${deltaClass}">${sign}${fmtPrice(delta)}</span>`}
+                </div>`;
+            }).join('');
+
+            const subRows = queuedSubIds.map(id => {
+                const s = substitutions[id];
+                return `<div class="change-row">
+                    <div class="thumb" style="background:${s.originalBg}">${s.originalIcon}</div>
+                    <div class="change-info">
+                        <h5>${s.originalTitle} <span class="status-tag replace" style="margin-left:6px;">SUBSTITUTE</span></h5>
+                        <div class="change-prices">
+                            <span class="old">${s.originalTitle}</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span class="new" style="color:#7c3aed;">${s.subTitle}</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-xmark" style="color:#cbd5e1; cursor:pointer; padding:6px;" onclick="removeQueuedSubstitute('${id}')" title="Remove from queue"></i>
+                </div>`;
+            }).join('');
+
+            const weightRows = weightIds.map(id => {
+                const w = weightAdj[id];
+                const delta = w.newPrice - w.oldPrice;
+                const choice = customerChoice(w, 'weight');
+                return `<div class="change-row">
+                    <div class="thumb" style="background:${w.bg}">${w.icon}</div>
+                    <div class="change-info">
+                        <h5>${w.title} <span class="status-tag replace" style="margin-left:6px;">WEIGHT ADJ.</span></h5>
+                        <div class="change-prices">
+                            <span class="old">EGP ${fmtPrice(w.oldPrice)}</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span class="new ${waCls(delta)}">EGP ${fmtPrice(w.newPrice)}</span>
+                        </div>
+                        ${choice ? `<div class="choice-note choice-${choice.key}">${choice.note}</div>` : ''}
+                    </div>
+                    ${choice ? `<span class="delta-badge choice choice-${choice.key}">${choice.badge}</span>` : `<span class="delta-badge ${delta < 0 ? 'less' : 'more'}">${delta < 0 ? '−' : '+'}${fmtPrice(Math.abs(delta))}</span>`}
+                </div>`;
+            }).join('');
+
+            // The over-the-threshold rule is shown before sending, so the seller knows what the customer will see
+            let weightNote = '';
+            if (weightIds.some(id => weightAdj[id].status === 'queued')) {
+                const queuedTotal = weightTotal(['queued']);
+                const amt = `<strong class="${waCls(queuedTotal)}">${waDelta(queuedTotal)}</strong>`;
+                weightNote = queuedTotal > WEIGHT_ADJ_THRESHOLD
+                    ? `<div class="confirm-banner">Total weight adjustment is ${amt}, over EGP ${WEIGHT_ADJ_THRESHOLD}. The customer will be asked to accept each item or remove it.</div>`
+                    : `<div class="confirm-banner">Total weight adjustment is ${amt}, within EGP ${WEIGHT_ADJ_THRESHOLD}. The customer will be informed, with nothing to approve.</div>`;
+            }
+
+            listEl.innerHTML = subRows + priceRows + weightRows + weightNote;
+
+            if (changesDirty) {
+                submitBtn.style.display = 'flex';
+                banner.style.display = 'none';
+            } else {
+                submitBtn.style.display = 'none';
+                // The "notification sent" note only makes sense until the customer responds
+                banner.style.display = syncState.sellerNotified ? 'none' : 'flex';
+            }
+            continueBtn.style.display = canCheckout() ? 'flex' : 'none';
+        }
+
+        function submitChanges() {
+            const pendingIds = Object.keys(priceChanges).filter(id => priceChanges[id].status === 'pending');
+            const queuedSubIds = Object.keys(substitutions).filter(id => substitutions[id].status === 'queued');
+
+            // Activate the 6-minute response timer for each substitute now that it's actually being sent.
+            // Price changes and weight adjustments share the same deadline, and the shop's phone freezes until it passes.
+            const batchDeadline = Date.now() + SUB_RESPONSE_SECONDS * 1000;
+            queuedSubIds.forEach(id => {
+                substitutions[id].status = 'pending';
+                substitutions[id].deadline = batchDeadline;
+            });
+
+            // Weight adjustments: over the threshold the customer must approve, otherwise they're applied directly
+            const queuedWeightIds = Object.keys(weightAdj).filter(id => weightAdj[id].status === 'queued');
+            const batchWeight = weightTotal(['queued']);
+            const weightNeedsApproval = batchWeight > WEIGHT_ADJ_THRESHOLD;
+            queuedWeightIds.forEach(id => { weightAdj[id].status = weightNeedsApproval ? 'pending' : 'applied'; });
+            if (queuedWeightIds.length && !weightNeedsApproval) {
+                logActivity('fa-solid fa-weight-scale', 'accept', `Weight adjustment of <strong class="${waCls(batchWeight)}">${waDelta(batchWeight)}</strong> applied and shared with the customer. No approval was needed.`);
+            }
+
+            changesDirty = false;
+            if (pendingIds.length === 0 && queuedSubIds.length === 0 && !weightNeedsApproval) {
+                // Nothing to approve, but the customer still sees the change (notification + info card)
+                showToast('Weight adjustment applied — customer informed');
+                renderReviewScreen();
+                renderList();
+                sellerRenderBanner();
+                if (typeof custRenderNotifState === 'function') custRenderNotifState();
+                if (typeof custRenderReview === 'function') custRenderReview();
+                return;
+            }
+            syncState.customerNotified = true;
+            syncState.sellerNotified = false;
+            startSellerFreeze(batchDeadline);
+
+            renderReviewScreen();
+            renderList();
+            sellerRenderBanner();
+            if (typeof custRenderNotifState === 'function') custRenderNotifState();
+            if (typeof custRenderReview === 'function') custRenderReview();
+        }
+
+        // --- Banner reflecting the customer's live status, shown on the order list screen ---
+        function sellerRenderBanner() {
+            if (typeof renderActivityLog === 'function') renderActivityLog();
+
+            const el = document.getElementById('sync-banner');
+            if (!el) return;
+
+            if (syncState.completed) {
+                el.style.display = 'flex';
+                el.className = 'sync-banner approved';
+                el.innerHTML = `<i class="fa-solid fa-circle-check"></i><div><strong>Order completed</strong><br>This order has been checked out.</div>`;
+                return;
+            }
+            if (syncState.orderCancelled) {
+                el.style.display = 'flex';
+                el.className = 'sync-banner cancelled';
+                el.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><div><strong>Order cancelled by customer</strong><br>See the activity log below for details.</div>`;
+                return;
+            }
+            if (syncState.sellerNotified) {
+                const decidedPrices = Object.values(priceChanges).filter(c => c.status !== 'pending');
+                const accepted = decidedPrices.filter(c => c.status === 'accepted').length;
+                const removed = decidedPrices.filter(c => c.status === 'removed').length;
+                const replace = decidedPrices.filter(c => c.status === 'replace_requested').length;
+
+                const decidedSubs = Object.values(substitutions).filter(s => s.status === 'accepted' || s.status === 'declined');
+                const subAccepted = decidedSubs.filter(s => s.status === 'accepted').length;
+                const subDeclined = decidedSubs.filter(s => s.status === 'declined').length;
+
+                const parts = [];
+                if (accepted) parts.push(`${accepted} price change${accepted === 1 ? '' : 's'} accepted`);
+                if (removed) parts.push(`${removed} item${removed === 1 ? '' : 's'} removed`);
+                if (replace) parts.push(`${replace} need${replace === 1 ? 's' : ''} a replacement`);
+                if (subAccepted) parts.push(`${subAccepted} substitute${subAccepted === 1 ? '' : 's'} accepted`);
+                if (subDeclined) parts.push(`${subDeclined} substitute${subDeclined === 1 ? '' : 's'} declined`);
+                const wAccepted = Object.values(weightAdj).filter(w => w.status === 'accepted').length;
+                const wRemoved = Object.values(weightAdj).filter(w => w.status === 'removed').length;
+                if (wAccepted) parts.push(`${wAccepted} weight adjustment${wAccepted === 1 ? '' : 's'} accepted`);
+                if (wRemoved) parts.push(`${wRemoved} item${wRemoved === 1 ? '' : 's'} removed after weight adjustment`);
+                const wCancelled = Object.values(weightAdj).filter(w => w.status === 'cancelled').length;
+                if (wCancelled) parts.push(`${wCancelled} weight adjustment${wCancelled === 1 ? '' : 's'} cancelled`);
+                const summary = parts.length ? parts.join(' · ') : 'Customer finished reviewing your order.';
+
+                el.style.display = 'flex';
+                el.className = 'sync-banner approved';
+                el.innerHTML = `<i class="fa-solid fa-bell"></i><div><strong>Customer responded!</strong><br>${summary}</div><button class="sync-banner-btn" onclick="goToCheckout()">Checkout <i class="fa-solid fa-arrow-right"></i></button>`;
+                return;
+            }
+            if (syncState.customerNotified) {
+                const pendingSubCount = Object.values(substitutions).filter(s => s.status === 'pending').length;
+                const waitingText = pendingSubCount > 0
+                    ? `They've been notified and have up to 6 minutes to respond to the substitute offer.`
+                    : (Object.values(priceChanges).some(c => c.status === 'pending')
+                        ? `They've been notified of your price changes.`
+                        : `They've been asked to accept the weight-adjusted prices, remove items or cancel the weight adjustment.`);
+                el.style.display = 'flex';
+                el.className = 'sync-banner waiting';
+                el.innerHTML = `<i class="fa-solid fa-clock"></i><div><strong>Waiting for customer...</strong><br>${waitingText}</div>`;
+                return;
+            }
+            el.style.display = 'none';
+        }
+
+        function goToCheckout() {
+            if (!canCheckout()) {
+                showToast('Send your changes to the customer first');
+                return;
+            }
+            const summary = document.getElementById('checkout-summary');
+            summary.innerHTML = order.map(id => {
+                const p = inventory[id];
+                return `<div class="summary-row">
+                    <span><span class="name">${p.title}</span><span class="qty">x1</span></span>
+                    <span class="amt">EGP ${fmtPrice(p.price)}</span>
+                </div>`;
+            }).join('');
+
+            const subtotal = calcSubtotal();
+            const total = subtotal + SERVICE_FEE + DELIVERY_FEE;
+
+            document.getElementById('co-subtotal').textContent = 'EGP ' + fmtPrice(subtotal);
+            document.getElementById('co-service').textContent = 'EGP ' + SERVICE_FEE;
+            document.getElementById('co-delivery').textContent = 'EGP ' + DELIVERY_FEE;
+            document.getElementById('co-total').textContent = 'EGP ' + fmtPrice(total);
+            document.getElementById('co-confirm-total').textContent = 'EGP ' + fmtPrice(total);
+
+            goTo(5);
+        }
+
+        function placeOrder() {
+            const total = calcSubtotal() + SERVICE_FEE + DELIVERY_FEE;
+            document.getElementById('success-total').textContent = 'EGP ' + fmtPrice(total);
+            syncState.completed = true;
+            sellerRenderBanner();
+            goTo(6);
+        }
+
+        // --- ORDERS: the shop's main menu. Every order keeps its own items, requests, log and customer state ---
+        const BASE_INVENTORY = JSON.parse(JSON.stringify(inventory)); // untouched catalog, cloned for each order
+        const ORDER_DEFS = [
+            { id: '1042', customer: 'Nour Hassan',   area: 'Dokki',       time: '10:42 AM', color: 'linear-gradient(135deg,#ff2f8f,#f472b6)', items: null },
+            { id: '1043', customer: 'Omar Khaled',   area: 'Mohandessin', time: '10:55 AM', color: 'linear-gradient(135deg,#6366f1,#a78bfa)', items: ['banana', 'tomato', 'milk', 'yogurt', 'water', 'biscuits'] },
+            { id: '1044', customer: 'Mona Adel',     area: 'Maadi',       time: '11:08 AM', color: 'linear-gradient(135deg,#0ea5e9,#38bdf8)', items: ['apple', 'cucumber', 'potato', 'mozzarella', 'feta', 'juice', 'coffee', 'chips'] },
+            { id: '1045', customer: 'Youssef Tarek', area: 'Nasr City',   time: '11:20 AM', color: 'linear-gradient(135deg,#10b981,#34d399)', items: ['grapes', 'cheese', 'halloumi', 'soda', 'icedtea', 'chocolate', 'nuts'] },
+            { id: '1046', customer: 'Laila Samir',   area: 'Zamalek',     time: '11:34 AM', color: 'linear-gradient(135deg,#f59e0b,#fbbf24)', items: ['banana', 'apple', 'tomato', 'labneh', 'milk', 'green_tea', 'popcorn', 'dishsoap', 'tissues'] },
+            { id: '1047', customer: 'Karim Fathy',   area: 'Dokki',       time: '11:47 AM', color: 'linear-gradient(135deg,#ef4444,#fb7185)', items: ['potato', 'cheddar', 'mango_juice', 'almonds', 'trashbags'] }
+        ];
+        let currentOrderId = null;
+
+        const cloneState = x => JSON.parse(JSON.stringify(x));
+        function replaceInPlace(target, source) {
+            if (Array.isArray(target)) { target.length = 0; source.forEach(x => target.push(x)); }
+            else { Object.keys(target).forEach(k => delete target[k]); Object.assign(target, source); }
+        }
+
+        function freshOrderState(def) {
+            return {
+                inventory: cloneState(BASE_INVENTORY),
+                order: def.items ? def.items.slice() : Object.keys(BASE_INVENTORY),
+                priceChanges: {}, substitutions: {}, weightAdj: {}, activityLog: [],
+                syncState: { customerNotified: false, sellerNotified: false, orderCancelled: false, completed: false },
+                changesDirty: false,
+                sellerFreeze: { active: false, deadline: 0, sig: '?' }
+            };
+        }
+
+        function saveCurrentOrder() {
+            const def = ORDER_DEFS.find(o => o.id === currentOrderId);
+            if (!def) return;
+            def.state = cloneState({ inventory, order, priceChanges, substitutions, weightAdj, activityLog, syncState, changesDirty, sellerFreeze });
+        }
+
+        function emptyActiveState() {
+            replaceInPlace(inventory, {});
+            replaceInPlace(order, []);
+            priceChanges = {}; substitutions = {}; weightAdj = {}; activityLog = [];
+            syncState = { customerNotified: false, sellerNotified: false, orderCancelled: false, completed: false };
+            changesDirty = false;
+            sellerFreeze = { active: false, deadline: 0, sig: '?' };
+            activeId = null;
+        }
+
+        function refreshBothPhones() {
+            sellerRenderFreeze();
+            sellerRenderBanner();
+            renderReviewScreen();
+            if (typeof custRenderNotifState === 'function') custRenderNotifState();
+            if (typeof custRenderReview === 'function') custRenderReview();
+            if (typeof custGoTo === 'function') custGoTo('lock');
+        }
+
+        function orderStatus(def) {
+            const st = def.state;
+            if (!st) return { key: 'new', label: 'NEW' };
+            if (st.syncState.orderCancelled) return { key: 'cancelled', label: 'CANCELLED' };
+            if (st.syncState.completed) return { key: 'completed', label: 'COMPLETED' };
+            const touched = Object.keys(st.priceChanges).length || Object.keys(st.substitutions).length || Object.keys(st.weightAdj).length;
+            return touched ? { key: 'progress', label: 'IN PROGRESS' } : { key: 'new', label: 'NEW' };
+        }
+
+        function renderOrdersList() {
+            const list = document.getElementById('orders-list');
+            if (!list) return;
+            list.innerHTML = ORDER_DEFS.map(def => {
+                const st = def.state;
+                const inv = st ? st.inventory : BASE_INVENTORY;
+                const ids = st ? st.order : (def.items || Object.keys(BASE_INVENTORY));
+                const total = ids.reduce((s, id) => s + inv[id].price, 0) + SERVICE_FEE + DELIVERY_FEE;
+                const status = orderStatus(def);
+                const initials = def.customer.split(' ').map(w => w[0]).join('');
+                return `
+                    <div class="list-item" onclick="openOrder('${def.id}')">
+                        <div class="thumb order-avatar" style="background:${def.color}">${initials}</div>
+                        <div class="item-info">
+                            <h5>Order #${def.id} <span class="status-tag ${status.key}">${status.label}</span></h5>
+                            <p>${def.customer} | ${def.area} | ${def.time}</p>
+                            <div class="item-price">${ids.length} item${ids.length === 1 ? '' : 's'} · EGP ${fmtPrice(total)}</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color:#cbd5e1; font-size:12px;"></i>
+                    </div>`;
+            }).join('');
+            document.getElementById('orders-sub').textContent = `Today · ${ORDER_DEFS.length} orders`;
+        }
+
+        // Open an order: load its own state into both phones
+        function openOrder(id) {
+            const def = ORDER_DEFS.find(o => o.id === id);
+            if (!def) return;
+            if (currentOrderId) saveCurrentOrder();
+            const st = cloneState(def.state || freshOrderState(def));
+            currentOrderId = id;
+            replaceInPlace(inventory, st.inventory);
+            replaceInPlace(order, st.order);
+            priceChanges = st.priceChanges; substitutions = st.substitutions; weightAdj = st.weightAdj;
+            activityLog = st.activityLog; syncState = st.syncState; changesDirty = st.changesDirty;
+            sellerFreeze = st.sellerFreeze; sellerFreeze.sig = '?';
+            activeId = null; searchTerm = ''; activeCategory = 'All';
+            document.getElementById('search-input').value = '';
+            document.querySelectorAll('#tabs-row .tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'All'));
+            document.getElementById('order-title').textContent = 'Order #' + id;
+            renderList();
+            refreshBothPhones();
+            goTo(1);
+        }
+
+        // Back to the main menu of orders (saves this order so it can be reopened exactly as left)
+        function goToOrders() {
+            if (currentOrderId) saveCurrentOrder();
+            currentOrderId = null;
+            emptyActiveState();
+            refreshBothPhones();
+            renderOrdersList();
+            goTo(10);
+        }
+
+        renderOrdersList();
+
+        let toastTimer = null;
+        function showToast(msg) {
+            clearTimeout(toastTimer);
+            const t = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = msg;
+            t.classList.add('show');
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        renderList();
+        sellerRenderBanner();
+    
+    
+    </script>
+
+    <script>
+
+
+        // ============ CUSTOMER APP LOGIC ============
+        // Reads/writes the SAME `priceChanges`, `substitutions` and `syncState` objects declared
+        // in the seller script above — this is what keeps the two phones in sync live.
+
+        function custPendingCounts() {
+            const priceCount = Object.values(priceChanges).filter(c => c.status === 'pending').length;
+            const subCount = Object.values(substitutions).filter(s => s.status === 'pending').length;
+            const weightCount = Object.values(weightAdj).some(w => w.status === 'pending') ? 1 : 0;
+            const weightInfoCount = Object.values(weightAdj).some(w => w.status === 'applied' && !w.seen) ? 1 : 0;
+            return { priceCount, subCount, weightCount, weightInfoCount, total: priceCount + subCount + weightCount + weightInfoCount };
+        }
+
+        function custRenderNotifState() {
+            const wrap = document.getElementById('u-notif-wrap');
+            const { priceCount, subCount, weightCount, weightInfoCount, total } = custPendingCounts();
+
+            if (total === 0) {
+                wrap.innerHTML = `<p class="u-empty-lock">No new notifications</p>`;
+                return;
+            }
+
+            let bodyText;
+            if (weightCount > 0 || weightInfoCount > 0) {
+                const others = priceCount + subCount;
+                const wt = weightCount > 0 ? weightTotal(['pending']) : weightTotal(['applied'], true);
+                bodyText = others > 0
+                    ? `${others} update${others > 1 ? 's' : ''} and a weight adjustment of ${waDelta(wt)}. Tap to review.`
+                    : `The weight of your items changed, so your total is EGP ${fmtPrice(Math.abs(wt))} ${wt < 0 ? 'lower' : 'higher'}. Tap to review.`;
+            } else if (priceCount > 0 && subCount > 0) {
+                bodyText = `${priceCount} price update${priceCount > 1 ? 's' : ''} and ${subCount} substitute suggestion${subCount > 1 ? 's' : ''}. Tap to review.`;
+            } else if (subCount > 0) {
+                bodyText = `The seller suggested ${subCount} substitute item${subCount > 1 ? 's' : ''} for your order. Tap to review.`;
+            } else {
+                bodyText = `${priceCount} item${priceCount > 1 ? 's' : ''} in your order ${priceCount > 1 ? 'have' : 'has'} a price change. Tap to review.`;
+            }
+
+            wrap.innerHTML = `
+                <div class="u-notif-card" id="u-notif-card" onclick="custOpenApp()">
+                    <div class="u-notif-header">
+                        <div class="u-notif-brand"><i class="fa-solid fa-cart-shopping"></i> Instashop</div>
+                        <div class="u-notif-time">now</div>
+                    </div>
+                    <div class="u-notif-body">
+                        <h4>Update${total > 1 ? 's' : ''} on your order</h4>
+                        <p>${bodyText}</p>
+                        ${freezeOn() ? `<span class="u-card-timer" style="margin-top:8px;"><i class="fa-solid fa-clock"></i> <span class="freeze-clock">${freezeLabel()}</span> left to respond</span>` : ''}
+                    </div>
+                </div>
+                <p class="u-tap-hint">Tap the notification to open</p>
+            `;
+        }
+
+        function custGoTo(name) {
+            document.getElementById('u-lock-screen').classList.toggle('active', name === 'lock');
+            document.getElementById('u-app-screen').classList.toggle('active', name === 'app');
+        }
+
+        function custOpenApp() {
+            custRenderReview();
+            custGoTo('app');
+        }
+
+        // Item boxes + the coloured total row, shared by the approval card and the info card
+        function custWeightItemsHTML(ids, statuses, unseenOnly) {
+            const total = weightTotal(statuses, unseenOnly);
+            return ids.map(id => {
+                const w = weightAdj[id];
+                return `
+                    <div class="u-product-box">
+                        <div class="u-product-img" style="background:${w.bg}">${w.icon}</div>
+                        <div class="u-product-info">
+                            <h5>${w.title}</h5>
+                            <div class="u-pd-row">
+                                <div class="u-pd-col"><span class="u-pd-label">Old price</span><span class="u-price-old">EGP ${fmtPrice(w.oldPrice)}</span></div>
+                                <div class="u-pd-divider"></div>
+                                <div class="u-pd-col"><span class="u-pd-label">New price</span><span class="u-price-new ${waCls(w.newPrice - w.oldPrice)}">EGP ${fmtPrice(w.newPrice)}</span></div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('') + `
+                    <div class="u-product-box" style="justify-content:space-between;">
+                        <span class="u-pd-label">Total price of the weight adjustment</span>
+                        <span class="u-price-new ${waCls(total)}" style="white-space:nowrap;">${waDelta(total)}</span>
+                    </div>`;
+        }
+
+        function custRenderReview() {
+            const body = document.getElementById('u-review-body');
+            const pendingPriceIds = Object.keys(priceChanges).filter(id => priceChanges[id].status === 'pending');
+            const pendingSubIds = Object.keys(substitutions).filter(id => substitutions[id].status === 'pending');
+
+            const pendingWeightIds = Object.keys(weightAdj).filter(id => weightAdj[id].status === 'pending');
+            const infoWeightIds = Object.keys(weightAdj).filter(id => weightAdj[id].status === 'applied' && !weightAdj[id].seen);
+
+            const comboIds = pendingPriceIds.filter(id => pendingSubIds.includes(id));
+            const onlyPriceIds = pendingPriceIds.filter(id => !comboIds.includes(id));
+            const onlySubIds = pendingSubIds.filter(id => !comboIds.includes(id));
+
+            // When the combined price difference is over EGP 50, show collapsed item rows
+            // and keep the bulk Accept / whole-order Cancel actions fixed at the bottom.
+            const pendingPriceDifference = pendingPriceIds.reduce((total, id) => {
+                const change = priceChanges[id];
+                return total + Math.abs(change.newPrice - change.oldPrice);
+            }, 0);
+            const bulkPriceMode = pendingPriceIds.length > 0 && pendingPriceDifference > WEIGHT_ADJ_THRESHOLD;
+            const bulkPriceFooterAction = bulkPriceMode ? `
+                <div class="u-action-btn accept" onclick="custAcceptAllPriceChanges()">
+                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check-double"></i></span> Accept all price changes (EGP ${fmtPrice(pendingPriceDifference)} total difference)</div>
+                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                </div>` : '';
+
+            if (comboIds.length === 0 && onlyPriceIds.length === 0 && onlySubIds.length === 0 && pendingWeightIds.length === 0 && infoWeightIds.length === 0) {
+                document.getElementById('u-review-footer').innerHTML = '';
+                if (syncState.orderCancelled) {
+                    body.innerHTML = `<div class="u-done-panel">
+                        <i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i>
+                        <h4>Order cancelled</h4>
+                        <p>We let the seller know you cancelled this order.</p>
+                    </div>`;
+                } else if (syncState.sellerNotified) {
+                    body.innerHTML = `<div class="u-done-panel">
+                        <i class="fa-solid fa-paper-plane" style="color:#ff2f8f;"></i>
+                        <h4>Choices sent!</h4>
+                        <p>The seller has been notified and can continue to checkout.</p>
+                    </div>`;
+                } else {
+                    body.innerHTML = `<div class="u-done-panel">
+                        <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i>
+                        <h4>All caught up</h4>
+                        <p>No pending updates to review right now.</p>
+                    </div>`;
+                }
+                return;
+            }
+
+            // Item has BOTH a price change and a substitute offer — one card, pick one option
+            const comboRows = comboIds.map(id => {
+                const c = priceChanges[id];
+                const s = substitutions[id];
+                const remain = Math.max(0, Math.ceil((s.deadline - Date.now()) / 1000));
+                if (bulkPriceMode) {
+                    const mm = Math.floor(remain / 60), ss = remain % 60;
+                    return `
+                    <div class="u-review-card u-price-accordion" id="u-row-${id}" onclick="custTogglePriceItem('${id}', event)" title="Tap anywhere on this item to expand">
+                        <button type="button" class="u-price-accordion-head" aria-expanded="false" aria-label="Expand ${c.title}">
+                            <span class="u-price-accordion-summary">
+                                <span class="u-head-icon sub"><i class="fa-solid fa-tag"></i></span>
+                                <span class="u-price-accordion-copy">
+                                    <h4>${c.title}</h4>
+                                    <p><span class="u-price-old">EGP ${fmtPrice(c.oldPrice)}</span> <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i> <strong class="u-price-new">EGP ${fmtPrice(c.newPrice)}</strong> · Price change + substitute</p>
+                                    <span class="u-accordion-hint">Tap item to view actions</span>
+                                </span>
+                            </span>
+                            <i class="fa-solid fa-chevron-down u-price-accordion-chevron" id="u-price-chevron-${id}"></i>
+                        </button>
+                        <div class="u-price-accordion-details" id="u-price-details-${id}">
+                            <p style="font-size:11px;color:#64748b;margin-bottom:8px;">Choose what you want to do with this item.</p>
+                            <div class="u-card-timer" style="margin:0 0 10px;"><i class="fa-solid fa-clock"></i> ${mm}:${String(ss).padStart(2,'0')} left to respond to substitute</div>
+                            <div class="u-product-box">
+                                <div class="u-swap-row">
+                                    <div class="u-swap-side">
+                                        <div class="u-product-img" style="background:${c.bg}">${c.icon}</div>
+                                        <p>${c.title}</p>
+                                        <span class="u-price-old">EGP ${fmtPrice(c.oldPrice)}</span>
+                                    </div>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                    <div class="u-swap-side">
+                                        <div class="u-product-img" style="background:${s.subBg}">${s.subIcon}</div>
+                                        <p>${s.subTitle}</p>
+                                        <span class="u-price-new">EGP ${fmtPrice(s.subPrice)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="u-action-stack">
+                                <div class="u-action-btn accept" onclick="custDecideItem('${id}','accept_price')">
+                                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check"></i></span> Accept price (EGP ${fmtPrice(c.newPrice)})</div>
+                                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                                </div>
+                                <div class="u-action-btn remove" onclick="custDecideItem('${id}','remove')">
+                                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-trash"></i></span> Remove item</div>
+                                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+                const mm = Math.floor(remain / 60), ss = remain % 60;
+                return `
+                <div class="u-review-card" id="u-row-${id}">
+                    <div class="u-card-head">
+                        <div class="u-head-icon sub"><i class="fa-solid fa-tag"></i></div>
+                        <div>
+                            <h4>Price update &amp; substitute for your item</h4>
+                            <p>The price for the item below has changed, and the seller offered a substitute. Choose how you'd like to proceed.</p>
+                            <span class="u-card-timer"><i class="fa-solid fa-clock"></i> <span id="u-sub-timer-${id}">${mm}:${String(ss).padStart(2,'0')}</span> left to respond</span>
+                        </div>
+                    </div>
+
+                    <div class="u-product-box">
+                        <div class="u-product-img" style="background:${c.bg}">${c.icon}</div>
+                        <div class="u-product-info">
+                            <h5>${c.title}</h5>
+                            <div class="u-pd-row">
+                                <div class="u-pd-col"><span class="u-pd-label">Old price</span><span class="u-price-old">EGP ${fmtPrice(c.oldPrice)}</span></div>
+                                <div class="u-pd-divider"></div>
+                                <div class="u-pd-col"><span class="u-pd-label">New price</span><span class="u-price-new">EGP ${fmtPrice(c.newPrice)}</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="u-product-box">
+                        <div class="u-swap-row">
+                            <div class="u-swap-side">
+                                <div class="u-product-img" style="background:${c.bg}">${c.icon}</div>
+                                <p>${c.title}</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <div class="u-swap-side">
+                                <div class="u-product-img" style="background:${s.subBg}">${s.subIcon}</div>
+                                <p>${s.subTitle}</p>
+                                <span class="u-price-new">EGP ${fmtPrice(s.subPrice)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="u-action-stack">
+                        <div class="u-action-btn accept" onclick="custDecideItem('${id}','accept_price')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check"></i></span> Accept price (EGP ${fmtPrice(c.newPrice)})</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                        <div class="u-action-btn replace" onclick="custDecideItem('${id}','accept_sub')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-arrows-rotate"></i></span> Accept substitute (${s.subTitle})</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                        <div class="u-action-btn remove" onclick="custDecideItem('${id}','remove')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-trash"></i></span> Remove item</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const priceRows = onlyPriceIds.map(id => {
+                const c = priceChanges[id];
+                if (bulkPriceMode) {
+                    return `
+                    <div class="u-review-card u-price-accordion" id="u-row-${id}" onclick="custTogglePriceItem('${id}', event)" title="Tap anywhere on this item to expand">
+                        <button type="button" class="u-price-accordion-head" aria-expanded="false" aria-label="Expand ${c.title}">
+                            <span class="u-price-accordion-summary">
+                                <span class="u-head-icon"><i class="fa-solid fa-tag"></i></span>
+                                <span class="u-price-accordion-copy">
+                                    <h4>${c.title}</h4>
+                                    <p><span class="u-price-old">EGP ${fmtPrice(c.oldPrice)}</span> <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i> <strong class="u-price-new">EGP ${fmtPrice(c.newPrice)}</strong> · Price update</p>
+                                    <span class="u-accordion-hint">Tap item to view actions</span>
+                                </span>
+                            </span>
+                            <i class="fa-solid fa-chevron-down u-price-accordion-chevron" id="u-price-chevron-${id}"></i>
+                        </button>
+                        <div class="u-price-accordion-details" id="u-price-details-${id}">
+                            <p style="font-size:11px;color:#64748b;margin-bottom:10px;">Choose what you want to do with this item.</p>
+                            <div class="u-product-box">
+                                <div class="u-product-img" style="background:${c.bg}">${c.icon}</div>
+                                <div class="u-product-info">
+                                    <h5>${c.title}</h5>
+                                    <div class="u-pd-row">
+                                        <div class="u-pd-col"><span class="u-pd-label">Old price</span><span class="u-price-old">EGP ${fmtPrice(c.oldPrice)}</span></div>
+                                        <div class="u-pd-divider"></div>
+                                        <div class="u-pd-col"><span class="u-pd-label">New price</span><span class="u-price-new">EGP ${fmtPrice(c.newPrice)}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="u-action-stack">
+                                <div class="u-action-btn accept" onclick="custDecideItem('${id}','accept_price')">
+                                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check"></i></span> Accept price (EGP ${fmtPrice(c.newPrice)})</div>
+                                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                                </div>
+                                <div class="u-action-btn remove" onclick="custDecideItem('${id}','remove')">
+                                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-trash"></i></span> Remove item</div>
+                                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+                return `
+                <div class="u-review-card" id="u-row-${id}">
+                    <div class="u-card-head">
+                        <div class="u-head-icon"><i class="fa-solid fa-tag"></i></div>
+                        <div>
+                            <h4>Price update for your item</h4>
+                            <p>The price for the item below has changed. Please review and let us know how you would like to proceed.</p>
+                        </div>
+                    </div>
+
+                    <div class="u-product-box">
+                        <div class="u-product-img" style="background:${c.bg}">${c.icon}</div>
+                        <div class="u-product-info">
+                            <h5>${c.title}</h5>
+                            <div class="u-pd-row">
+                                <div class="u-pd-col"><span class="u-pd-label">Old price</span><span class="u-price-old">EGP ${fmtPrice(c.oldPrice)}</span></div>
+                                <div class="u-pd-divider"></div>
+                                <div class="u-pd-col"><span class="u-pd-label">New price</span><span class="u-price-new">EGP ${fmtPrice(c.newPrice)}</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="u-action-stack">
+                        <div class="u-action-btn accept" onclick="custDecide('${id}','accepted')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check"></i></span> Accept price (EGP ${fmtPrice(c.newPrice)})</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                        <div class="u-action-btn replace" onclick="custDecide('${id}','replace_requested')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-arrows-rotate"></i></span> Replace item</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                        <div class="u-action-btn remove" onclick="custDecide('${id}','removed')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-trash"></i></span> Remove item</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const subRows = onlySubIds.map(id => {
+                const s = substitutions[id];
+                const remain = Math.max(0, Math.ceil((s.deadline - Date.now()) / 1000));
+                const mm = Math.floor(remain / 60), ss = remain % 60;
+                return `
+                <div class="u-review-card" id="u-subrow-${id}">
+                    <div class="u-card-head">
+                        <div class="u-head-icon sub"><i class="fa-solid fa-arrows-rotate"></i></div>
+                        <div>
+                            <h4>Suggested substitute for your item</h4>
+                            <p>${s.originalTitle} may not be available. The seller suggested a substitute below.</p>
+                            <span class="u-card-timer"><i class="fa-solid fa-clock"></i> <span id="u-sub-timer-${id}">${mm}:${String(ss).padStart(2,'0')}</span> left to respond</span>
+                        </div>
+                    </div>
+
+                    <div class="u-product-box">
+                        <div class="u-swap-row">
+                            <div class="u-swap-side">
+                                <div class="u-product-img" style="background:${s.originalBg}">${s.originalIcon}</div>
+                                <p>${s.originalTitle}</p>
+                                <span class="u-price-old">EGP ${fmtPrice(s.originalPrice)}</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <div class="u-swap-side">
+                                <div class="u-product-img" style="background:${s.subBg}">${s.subIcon}</div>
+                                <p>${s.subTitle}</p>
+                                <span class="u-price-new">EGP ${fmtPrice(s.subPrice)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="u-action-stack">
+                        <div class="u-action-btn accept" onclick="custDecideSub('${id}','accepted')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check"></i></span> Accept substitute</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                        <div class="u-action-btn remove" onclick="custDecideSub('${id}','declined')">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-trash"></i></span> No thanks, remove item</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Weight adjustments over the threshold: a summary card, then one tap-to-expand row per item
+            // (Accept price / Remove item). Accept all weight adjustments + Cancel whole order sit in the footer.
+            const weightHeader = pendingWeightIds.length === 0 ? '' : `
+                <div class="u-review-card" id="u-weightrow">
+                    <div class="u-card-head">
+                        <div class="u-head-icon"><i class="fa-solid fa-weight-scale"></i></div>
+                        <div>
+                            <h4>Weight adjustment on your order</h4>
+                            <p>The final weight of some items is different from what was ordered, so their total price changed. Tap an item below to accept its price or remove it.</p>
+                        </div>
+                    </div>
+
+                    ${custWeightItemsHTML([], ['pending'])}
+                </div>`;
+
+            const weightAccordionRows = pendingWeightIds.map(id => {
+                const w = weightAdj[id];
+                const delta = w.newPrice - w.oldPrice;
+                const cls = waCls(delta);
+                return `
+                <div class="u-review-card u-price-accordion" id="u-wrow-${id}" onclick="custToggleWeightItem('${id}', event)" title="Tap anywhere on this item to expand">
+                    <button type="button" class="u-price-accordion-head" aria-expanded="false" aria-label="Expand ${w.title}">
+                        <span class="u-price-accordion-summary">
+                            <span class="u-head-icon"><i class="fa-solid fa-weight-scale"></i></span>
+                            <span class="u-price-accordion-copy">
+                                <h4>${w.title}</h4>
+                                <p><span class="u-price-old">EGP ${fmtPrice(w.oldPrice)}</span> <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i> <strong class="u-price-new ${cls}">EGP ${fmtPrice(w.newPrice)}</strong> · Weight adjustment</p>
+                                <span class="u-accordion-hint">Tap item to view actions</span>
+                            </span>
+                        </span>
+                        <i class="fa-solid fa-chevron-down u-price-accordion-chevron"></i>
+                    </button>
+                    <div class="u-price-accordion-details">
+                        <div class="u-action-stack">
+                            <div class="u-action-btn accept" onclick="custDecideWeightItem('${id}','accepted')">
+                                <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check"></i></span> Accept price (EGP ${fmtPrice(w.newPrice)})</div>
+                                <i class="fa-solid fa-chevron-right u-chev"></i>
+                            </div>
+                            <div class="u-action-btn remove" onclick="custDecideWeightItem('${id}','removed')">
+                                <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-trash"></i></span> Remove item</div>
+                                <i class="fa-solid fa-chevron-right u-chev"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            const weightRow = weightHeader + weightAccordionRows;
+
+            const infoDown = weightTotal(['applied'], true) < 0;
+            const weightInfoRow = infoWeightIds.length === 0 ? '' : `
+                <div class="u-review-card" id="u-weightinfo">
+                    <div class="u-card-head">
+                        <div class="u-head-icon"><i class="fa-solid fa-weight-scale"></i></div>
+                        <div>
+                            <h4>Weight adjustment on your order</h4>
+                            <p>The final weight of some items is different from what was ordered. ${infoDown ? 'Your total went down, so no action is needed.' : 'The change is within EGP ' + WEIGHT_ADJ_THRESHOLD + ', so it was added to your order and no action is needed.'}</p>
+                        </div>
+                    </div>
+
+                    ${custWeightItemsHTML(infoWeightIds, ['applied'], true)}
+
+                    <div class="u-action-stack">
+                        <div class="u-action-btn accept" onclick="custAckWeight()">
+                            <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check-double"></i></span> Acknowledge all weight adjustments</div>
+                            <i class="fa-solid fa-chevron-right u-chev"></i>
+                        </div>
+                    </div>
+                </div>`;
+
+            const cancelRow = `
+                <div class="u-action-btn cancel u-cancel-order" onclick="custCancelOrder()">
+                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-xmark"></i></span> Cancel whole order</div>
+                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                </div>`;
+
+            const hasActionable = comboIds.length + onlyPriceIds.length + onlySubIds.length + pendingWeightIds.length > 0;
+            const freezePill = freezeOn() ? `<div class="u-card-timer" style="margin:0 0 12px;"><i class="fa-solid fa-clock"></i> <span class="freeze-clock">${freezeLabel()}</span> left to respond</div>` : '';
+            body.innerHTML = freezePill + weightRow + weightInfoRow + comboRows + subRows + priceRows;
+
+            const weightFooterAction = pendingWeightIds.length === 0 ? '' : `
+                <div class="u-action-btn accept" onclick="custAcceptAllWeight()">
+                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-check-double"></i></span> Accept all weight adjustments (EGP ${fmtPrice(weightTotal(['pending']))} total)</div>
+                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                </div>`;
+            const weightCancelAction = pendingWeightIds.length === 0 ? '' : `
+                <div class="u-action-btn cancel u-cancel-order" onclick="custCancelAllWeight()">
+                    <div class="u-action-left"><span class="u-action-icon"><i class="fa-solid fa-xmark"></i></span> Cancel whole weight adjustment</div>
+                    <i class="fa-solid fa-chevron-right u-chev"></i>
+                </div>`;
+            // "Cancel whole order" is only offered while price changes / substitutes are still waiting
+            const orderActionable = comboIds.length + onlyPriceIds.length + onlySubIds.length > 0;
+            const accordionMode = bulkPriceMode || pendingWeightIds.length > 0;
+            const footerActions = [];
+            if (bulkPriceMode) footerActions.push('accept all price changes');
+            if (pendingWeightIds.length > 0) footerActions.push('accept all weight adjustments', 'cancel the whole weight adjustment');
+            if (orderActionable) footerActions.push('cancel the whole order');
+            const footerWhat = footerActions.length > 1
+                ? footerActions.slice(0, -1).join(', ') + ' or ' + footerActions[footerActions.length - 1]
+                : footerActions[0];
+            const footerNote = `${pendingWeightIds.length === 0 ? `Combined price difference is over EGP ${WEIGHT_ADJ_THRESHOLD}. ` : ''}Tap anywhere on an item above to expand it and choose Accept price or Remove item. Use the buttons below to ${footerWhat}.`;
+
+            const footer = document.getElementById('u-review-footer');
+            footer.innerHTML = accordionMode ? `
+                <p style="font-size:10.5px;color:#64748b;line-height:1.35;margin:0 0 8px;">${footerNote}</p>
+                <div class="u-action-stack">${bulkPriceFooterAction}${weightFooterAction}${weightCancelAction}${orderActionable ? cancelRow : ''}</div>
+            ` : (hasActionable ? `<div class="u-action-stack">${cancelRow}</div>` : '');
+        }
+
+        // Expand/collapse when the customer taps anywhere on the collapsed item card.
+        // Taps inside the expanded action area are reserved for Accept price / Remove item.
+        function custTogglePriceItem(id, event) {
+            if (event && event.target && event.target.closest('.u-price-accordion-details')) return;
+            const row = document.getElementById(`u-row-${id}`);
+            if (!row) return;
+            const isOpen = row.classList.toggle('open');
+            const head = row.querySelector('.u-price-accordion-head');
+            if (head) head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        // Used when a single item has BOTH a pending price change and a pending substitute offer
+        function custDecideItem(id, action) {
+            const priceEntry = priceChanges[id];
+            const subEntry = substitutions[id];
+            const hasPrice = priceEntry && priceEntry.status === 'pending';
+            const hasSub = subEntry && subEntry.status === 'pending';
+
+            if (action === 'accept_price') {
+                if (hasPrice) {
+                    priceEntry.status = 'accepted';
+                    if (typeof logActivity === 'function') {
+                        logActivity('fa-solid fa-check', 'accept', `Customer accepted the new price for <strong>${priceEntry.title}</strong> — EGP ${fmtPrice(priceEntry.newPrice)}, instead of switching to the substitute.`);
+                    }
+                }
+                if (hasSub) {
+                    subEntry.status = 'declined';
+                }
+                custShowToast(`Accepted new price for ${priceEntry ? priceEntry.title : 'item'}`);
+            } else if (action === 'accept_sub') {
+                if (hasSub) {
+                    const idx = order.indexOf(subEntry.originalId);
+                    if (idx > -1) order[idx] = subEntry.subId;
+                    subEntry.status = 'accepted';
+                    if (typeof logActivity === 'function') {
+                        logActivity('fa-solid fa-check', 'accept-sub', `Customer chose the substitute <strong>${subEntry.subTitle}</strong> over the new price for <strong>${subEntry.originalTitle}</strong>.`);
+                    }
+                    custShowToast(`Swapped in ${subEntry.subTitle}`);
+                }
+                if (hasPrice) {
+                    priceEntry.status = 'superseded'; // superseded by the substitute swap, not a removal
+                }
+            } else if (action === 'remove') {
+                const idx = order.indexOf(id);
+                if (idx > -1) order.splice(idx, 1);
+                if (hasPrice) priceEntry.status = 'removed';
+                if (hasSub) subEntry.status = 'declined';
+                const label = (priceEntry && priceEntry.title) || (subEntry && subEntry.originalTitle) || 'Item';
+                if (typeof logActivity === 'function') {
+                    logActivity('fa-solid fa-trash', 'remove', `Customer removed <strong>${label}</strong> instead of accepting the new price or the substitute.`);
+                }
+                custShowToast(`${label} removed from order`);
+            }
+
+            renderList();
+            custRenderReview();
+            custRenderNotifState();
+            custCheckIfDone();
+        }
+
+        function custAcceptAllPriceChanges() {
+            const ids = Object.keys(priceChanges).filter(id => priceChanges[id].status === 'pending');
+            if (ids.length === 0) return;
+
+            ids.forEach(id => {
+                const change = priceChanges[id];
+                change.status = 'accepted';
+
+                // When a price change shares a card with a substitute offer, accepting the price
+                // also declines that substitute so the customer's choice is unambiguous.
+                if (substitutions[id] && substitutions[id].status === 'pending') {
+                    substitutions[id].status = 'declined';
+                }
+
+                if (typeof logActivity === 'function') {
+                    logActivity('fa-solid fa-check', 'accept', `Customer accepted the new price for <strong>${change.title}</strong> — EGP ${fmtPrice(change.newPrice)}.`);
+                }
+            });
+
+            custShowToast(`Accepted all ${ids.length} price change${ids.length === 1 ? '' : 's'}`);
+            renderList();
+            custRenderReview();
+            custRenderNotifState();
+            custCheckIfDone();
+        }
+
+        function custDecide(id, decision) {
+            const c = priceChanges[id];
+            if (!c) return;
+            c.status = decision;
+
+            const msg = decision === 'accepted' ? `Accepted new price for ${c.title}` :
+                        decision === 'removed' ? `${c.title} removed from order` :
+                        `Requested a replacement for ${c.title}`;
+            custShowToast(msg);
+
+            if (decision === 'removed') {
+                const idx = order.indexOf(id);
+                if (idx > -1) order.splice(idx, 1);
+            }
+
+            if (typeof logActivity === 'function') {
+                if (decision === 'accepted') {
+                    logActivity('fa-solid fa-check', 'accept', `Customer accepted the new price for <strong>${c.title}</strong> — EGP ${fmtPrice(c.newPrice)}.`);
+                } else if (decision === 'removed') {
+                    logActivity('fa-solid fa-trash', 'remove', `Customer asked to remove <strong>${c.title}</strong> instead of paying the new price.`);
+                } else {
+                    logActivity('fa-solid fa-arrows-rotate', 'accept', `Customer asked for a replacement for <strong>${c.title}</strong> — pick one from Select Alternative Item.`);
+                }
+            }
+
+            renderList();          // refresh the seller's item list live
+            custRenderReview();
+            custRenderNotifState();
+            custCheckIfDone();
+        }
+
+        function custDecideSub(id, decision) {
+            const s = substitutions[id];
+            if (!s || s.status !== 'pending') return;
+            s.status = decision;
+
+            const idx = order.indexOf(s.originalId);
+            if (decision === 'accepted') {
+                if (idx > -1) order[idx] = s.subId;
+                custShowToast(`Swapped in ${s.subTitle}`);
+                if (typeof logActivity === 'function') {
+                    logActivity('fa-solid fa-check', 'accept-sub', `Customer accepted the substitute <strong>${s.subTitle}</strong> in place of <strong>${s.originalTitle}</strong>.`);
+                }
+            } else {
+                if (idx > -1) order.splice(idx, 1);
+                custShowToast(`${s.originalTitle} removed`);
+                if (typeof logActivity === 'function') {
+                    logActivity('fa-solid fa-xmark', 'decline-sub', `Customer declined the substitute and removed <strong>${s.originalTitle}</strong> from the order.`);
+                }
+            }
+
+            renderList();
+            custRenderReview();
+            custRenderNotifState();
+            custCheckIfDone();
+        }
+
+        function custAckWeight() {
+            Object.values(weightAdj).forEach(w => { if (w.status === 'applied') w.seen = true; });
+            custShowToast('All weight adjustments acknowledged');
+            renderReviewScreen();
+            custRenderReview();
+            custRenderNotifState();
+        }
+
+        // Expand/collapse a weight-adjusted item row (same behaviour as the price rows)
+        function custToggleWeightItem(id, event) {
+            if (event && event.target && event.target.closest('.u-price-accordion-details')) return;
+            const row = document.getElementById(`u-wrow-${id}`);
+            if (!row) return;
+            const isOpen = row.classList.toggle('open');
+            const head = row.querySelector('.u-price-accordion-head');
+            if (head) head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        // One item: accept its weight-adjusted price, or remove the item
+        function custDecideWeightItem(id, decision) {
+            const w = weightAdj[id];
+            if (!w || w.status !== 'pending') return;
+            const delta = w.newPrice - w.oldPrice;
+            if (decision === 'accepted') {
+                w.status = 'accepted';
+                custShowToast(`Accepted new price for ${w.title}`);
+                if (typeof logActivity === 'function') {
+                    logActivity('fa-solid fa-check', 'accept', `Customer accepted the weight-adjusted price for <strong>${w.title}</strong> — EGP ${fmtPrice(w.newPrice)} (<strong class="${waCls(delta)}">${waDelta(delta)}</strong>).`);
+                }
+            } else {
+                w.status = 'removed';
+                const idx = order.indexOf(id);
+                if (idx > -1) order.splice(idx, 1);
+                custShowToast(`${w.title} removed from order`);
+                if (typeof logActivity === 'function') {
+                    logActivity('fa-solid fa-trash', 'remove', `Customer removed <strong>${w.title}</strong> instead of accepting the weight adjustment of <strong class="${waCls(delta)}">${waDelta(delta)}</strong>.`);
+                }
+            }
+            renderList();
+            custRenderReview();
+            custRenderNotifState();
+            custCheckIfDone();
+        }
+
+        function custAcceptAllWeight() {
+            const ids = Object.keys(weightAdj).filter(id => weightAdj[id].status === 'pending');
+            if (ids.length === 0) return;
+            const total = weightTotal(['pending']);
+            const s = ids.length === 1 ? '' : 's';
+            ids.forEach(id => { weightAdj[id].status = 'accepted'; });
+            custShowToast(`Accepted all ${ids.length} weight adjustment${s}`);
+            if (typeof logActivity === 'function') {
+                logActivity('fa-solid fa-check', 'accept', `Customer accepted all ${ids.length} weight adjustment${s} — <strong class="${waCls(total)}">${waDelta(total)}</strong> added to the order.`);
+            }
+            renderList();
+            custRenderReview();
+            custRenderNotifState();
+            custCheckIfDone();
+        }
+
+        // Cancel every waiting weight adjustment at once. The order stays; the items go back to their original prices.
+        function custCancelAllWeight() {
+            const ids = Object.keys(weightAdj).filter(id => weightAdj[id].status === 'pending');
+            if (ids.length === 0) return;
+            const total = weightTotal(['pending']);
+            const s = ids.length === 1 ? '' : 's';
+            ids.forEach(id => {
+                const w = weightAdj[id];
+                w.status = 'cancelled';
+                if (inventory[id]) {
+                    inventory[id].price = w.oldPrice;
+                    if (!priceChanges[id]) inventory[id].updated = false;
+                }
+            });
+            custShowToast(`Cancelled ${ids.length} weight adjustment${s}`);
+            if (typeof logActivity === 'function') {
+                logActivity('fa-solid fa-xmark', 'cancel', `Customer cancelled the whole weight adjustment (<strong class="${waCls(total)}">${waDelta(total)}</strong>). The ${ids.length === 1 ? 'item stays' : ids.length + ' items stay'} at the original price${s}.`);
+            }
+            renderList();
+            custRenderReview();
+            custRenderNotifState();
+            custCheckIfDone();
+        }
+
+        function custCancelOrder() {
+            if (syncState.orderCancelled) return;
+
+            // Close every outstanding review decision because the entire order is being cancelled.
+            Object.values(priceChanges).forEach(change => {
+                if (change.status === 'pending') change.status = 'cancelled';
+            });
+            Object.values(substitutions).forEach(sub => {
+                if (sub.status === 'pending') sub.status = 'declined';
+            });
+            Object.values(weightAdj).forEach(weight => {
+                if (weight.status === 'pending' || weight.status === 'queued') weight.status = 'cancelled';
+                if (weight.status === 'applied') weight.seen = true;
+            });
+
+            syncState.orderCancelled = true;
+            custShowToast('Whole order cancelled');
+            if (typeof logActivity === 'function') {
+                logActivity('fa-solid fa-ban', 'cancel', `Customer cancelled the entire order. All pending item and weight decisions were closed.`);
+            }
+            renderList();
+            custFinalize();
+        }
+
+        function custCheckIfDone() {
+            if (typeof renderReviewScreen === 'function') renderReviewScreen();
+            const stillPending = Object.values(priceChanges).some(c => c.status === 'pending') ||
+                                  Object.values(substitutions).some(s => s.status === 'pending') ||
+                                  Object.values(weightAdj).some(w => w.status === 'pending');
+            if (!stillPending) custFinalize();
+        }
+
+        function custFinalize() {
+            syncState.sellerNotified = true;
+            syncState.customerNotified = false;
+            custRenderNotifState();
+            custRenderReview();
+            if (typeof sellerRenderBanner === 'function') sellerRenderBanner();
+            if (typeof sellerRenderFreeze === 'function') sellerRenderFreeze();
+        }
+
+        let custToastTimer = null;
+        function custShowToast(msg) {
+            clearTimeout(custToastTimer);
+            const t = document.getElementById('u-toast');
+            document.getElementById('u-toast-text').textContent = msg;
+            t.classList.add('show');
+            custToastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        custRenderNotifState();
+
+    
+    </script>
+
+</body>
+</html>
